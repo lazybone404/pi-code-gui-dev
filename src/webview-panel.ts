@@ -66,6 +66,12 @@ export class PiWebviewPanel {
     this.setupWebviewHandlers();
     this.setupServiceHandlers();
 
+    // Send locale to webview so it can render in the correct language
+    this.panel.webview.postMessage({
+      type: "setLocale",
+      data: { locale: vscode.env.language },
+    });
+
     this.panel.onDidChangeViewState((e) => {
       if (e.webviewPanel.active && this._onActivateCb) {
         this._onActivateCb();

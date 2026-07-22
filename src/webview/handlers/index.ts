@@ -1,4 +1,5 @@
 import { state } from "../state.js";
+import { setLocale } from "../locale.js";
 import { logEvent, logDom, summary as debugSummary, debugEventLog } from "../debug.js";
 import {
   renderMarkdown, renderBlock, renderInline, patchBlockList,
@@ -186,6 +187,7 @@ export function createLiveCard(key: string, customType: string, label: string, c
       case "widget-update":      handleWidgetUpdate(msg.data); break;
       case "registerMessageRenderer": handleRegisterMessageRenderer(msg.data); break;
       case "show_dialog":          handleShowDialog(msg.data); break;
+      case "setLocale":            handleSetLocale(msg.data); break;
 
       default:
         // Surface unknown message types as visible notifications.
@@ -2264,3 +2266,9 @@ export function handleDebugCommand(): void {
     state.chatContainer.appendChild(el);
     scrollToBottom();
   }
+
+export function handleSetLocale(data: Record<string, unknown>): void {
+  if (data && typeof data.locale === "string") {
+    setLocale(data.locale);
+  }
+}
