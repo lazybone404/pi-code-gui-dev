@@ -176,11 +176,30 @@ export class PiWebviewPanel {
 
           case "webviewReady":
             await this._sendAuthStatus();
+            await this._sendModelOptions();
             break;
 
           case "searchSessions":
             void vscode.commands.executeCommand("pi-code-gui.filterPastSessions");
             break;
+
+          case "selectModel": {
+            const sel = message as { data: { provider: string; id: string } };
+            const { provider, id } = sel.data || {};
+            if (provider && id) {
+              await this.piService.setModel(provider, id);
+            }
+            break;
+          }
+
+          case "selectThinkingLevel": {
+            const sel = message as { data: { level: string } };
+            const level = sel.data?.level;
+            if (level) {
+              await this.piService.setThinkingLevel(level);
+            }
+            break;
+          }
 
           case "openUrl":
             vscode.env.openExternal(vscode.Uri.parse(message.url));
@@ -324,6 +343,44 @@ export class PiWebviewPanel {
     } catch {
       // If check fails, default to showing welcome — user can still log in manually
       this.postMessage({ type: "authStatus", data: { loggedIn: false } });
+    }
+  }
+
+  /** Send available models and thinking levels for in-webview dropdowns. */
+  private async _sendModelOptions(): Promise<void> {
+    try {
+      const models = await this.piService.getAvailableModels();
+      const currentModel = this.piService.model;
+      const thinkingLevels = [
+        { label: "off", description: "No thinking" },
+        { label: "minimal", description: "Minimal thinking" },
+        { label: "low", description: "Brief thinking" },
+        { label: "medium", description: "Balanced thinking" },
+        { label: "high", description: "Extended thinking" },
+        { label: "xhigh", description: "Maximum thinking" },
+      ];
+      const currentThinking = this.piService.thinkingLevel ?? "off";
+      const defaultThinking = this.piService.getDefaultThinking();
+
+      this.postMessage({
+        type: "setModelOptions",
+        data: {
+          models: models.map((m) => ({
+            provider: m.provider,
+            id: m.id,
+            name: m.name,
+            current: m.provider === currentModel?.provider && m.id === currentModel?.id,
+          })),
+          thinkingLevels: thinkingLevels.map((l) => ({
+            label: l.label,
+            description: l.description,
+            current: l.label === currentThinking,
+            isDefault: l.label === defaultThinking,
+          })),
+        },
+      });
+    } catch {
+      // Non-critical: dropdowns will just be empty
     }
   }
 

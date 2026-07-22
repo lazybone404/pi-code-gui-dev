@@ -190,6 +190,7 @@ export function createLiveCard(key: string, customType: string, label: string, c
       case "setLocale":            handleSetLocale(msg.data); break;
       case "authStatus":          handleAuthStatus(msg.data); break;
       case "sessionName":         handleSessionName(msg.data); break;
+      case "setModelOptions":     handleSetModelOptions(msg.data); break;
 
       default:
         // Surface unknown message types as visible notifications.
@@ -1330,13 +1331,47 @@ export function sendPrompt(): void {
 
   // ── Navigation bar click handlers ───────────────
   if (navModel) {
-    navModel.addEventListener("click", function () {
-      window.__vscode.postMessage({ type: "pickModel" });
+    navModel.addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (_modelOptions.length === 0) { return; }
+      showDropdown(navModel as HTMLElement, _modelOptions.map(function (m) {
+        var label = m.name || m.id;
+        if (m.current) { label = "✓ " + label; }
+        return {
+          key: m.provider + "/" + m.id,
+          label: label,
+          desc: m.provider,
+          active: m.current,
+          onSelect: function () {
+            window.__vscode.postMessage({
+              type: "selectModel",
+              data: { provider: m.provider, id: m.id },
+            });
+          },
+        };
+      }));
     });
   }
   if (navThinking) {
-    navThinking.addEventListener("click", function () {
-      window.__vscode.postMessage({ type: "pickThinkingLevel" });
+    navThinking.addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (_thinkingOptions.length === 0) { return; }
+      showDropdown(navThinking as HTMLElement, _thinkingOptions.map(function (t) {
+        var label = t.label + (t.isDefault ? " ★" : "");
+        if (t.current) { label = "✓ " + label; }
+        return {
+          key: t.label,
+          label: label,
+          desc: t.description,
+          active: t.current,
+          onSelect: function () {
+            window.__vscode.postMessage({
+              type: "selectThinkingLevel",
+              data: { level: t.label },
+            });
+          },
+        };
+      }));
     });
   }
   if (sbEffort) {
@@ -2303,5 +2338,83 @@ export function handleSessionName(data: Record<string, unknown>): void {
   if (data && typeof data.name === "string") {
     var title = document.getElementById("nav-session");
     if (title) { title.textContent = data.name; }
+  }
+}
+
+// ═══ In-webview dropdowns for model/thinking ═══════
+
+var _modelOptions: Array<{ provider: string; id: string; name?: string; current: boolean }> = [];
+var _thinkingOptions: Array<{ label: string; description: string; current: boolean; isDefault: boolean }> = [];
+var _activeDropdown: HTMLElement | null = null;
+
+export function handleSetModelOptions(data: Record<string, unknown>): void {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (data && Array.isArray((data as any).models)) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    _modelOptions = (data as any).models;
+
+    // Update the nav pill text for current model
+    var current = _modelOptions.find(function (m) { return m.current; });
+    if (navModel && current) {
+      navModel.textContent = sbModelText(current.id);
+    }
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (data && Array.isArray((data as any).thinkingLevels)) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    _thinkingOptions = (data as any).thinkingLevels;
+
+    var currentT = _thinkingOptions.find(function (t) { return t.current; });
+    if (navThinking && currentT) {
+      navThinking.textContent = currentT.label;
+    }
+  }
+}
+
+/** Create and show a dropdown anchored to a trigger element. */
+function showDropdown(
+  anchor: HTMLElement,
+  items: Array<{ key: string; label: string; desc?: string; active: boolean; onSelect: () => void }>,
+): void {
+  closeDropdown();
+
+  var dd = document.createElement("div");
+  dd.className = "nav-dropdown";
+
+  items.forEach(function (item) {
+    var row = document.createElement("button");
+    row.className = "nav-dropdown-item" + (item.active ? " active" : "");
+    row.innerHTML =
+      "<span>" + escapeHtml(item.label) + "</span>" +
+      (item.desc ? "<span class=\"nav-dropdown-desc\">" + escapeHtml(item.desc) + "</span>" : "");
+    row.addEventListener("click", function (e) {
+      e.stopPropagation();
+      item.onSelect();
+      closeDropdown();
+    });
+    dd.appendChild(row);
+  });
+
+  document.body.appendChild(dd);
+
+  // Position below the anchor
+  var anchorRect = anchor.getBoundingClientRect();
+  dd.style.position = "fixed";
+  dd.style.top = (anchorRect.bottom + 2) + "px";
+  dd.style.left = anchorRect.left + "px";
+  dd.style.minWidth = Math.max(anchorRect.width, 160) + "px";
+
+  _activeDropdown = dd;
+
+  // Close on outside click
+  setTimeout(function () {
+    document.addEventListener("click", closeDropdown, { once: true });
+  }, 0);
+}
+
+function closeDropdown(): void {
+  if (_activeDropdown) {
+    _activeDropdown.remove();
+    _activeDropdown = null;
   }
 }

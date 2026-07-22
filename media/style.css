@@ -331,6 +331,52 @@
     border-color: var(--fg-tertiary);
   }
 
+  .nav-dropdown {
+    position: fixed;
+    z-index: 1000;
+    background: var(--vscode-menu-background);
+    color: var(--vscode-menu-foreground);
+    border: 1px solid var(--vscode-menu-border);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    padding: 4px;
+    max-height: 320px;
+    overflow-y: auto;
+  }
+
+  .nav-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 4px 8px;
+    border: none;
+    border-radius: 4px;
+    background: none;
+    color: inherit;
+    font: inherit;
+    font-size: 0.82em;
+    cursor: pointer;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .nav-dropdown-item:hover {
+    background: var(--vscode-menu-selectionBackground);
+    color: var(--vscode-menu-selectionForeground);
+  }
+
+  .nav-dropdown-item.active {
+    background: var(--bg-tertiary);
+    font-weight: 600;
+  }
+
+  .nav-dropdown-desc {
+    color: var(--fg-tertiary);
+    font-size: 0.9em;
+    margin-left: auto;
+  }
+
   /* ═══ Code blocks (rich: header, copy btn, line numbers) ══ */
 
   .code-block-wrapper {

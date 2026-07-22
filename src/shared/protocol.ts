@@ -366,6 +366,25 @@ const ExtensionToWebviewSchema = z.discriminatedUnion("type", [
     }),
   }),
 
+  // Model & thinking options (extension → webview)
+  z.object({
+    type: z.literal("setModelOptions"),
+    data: z.object({
+      models: z.array(z.object({
+        provider: z.string(),
+        id: z.string(),
+        name: z.string().optional(),
+        current: z.boolean(),
+      })),
+      thinkingLevels: z.array(z.object({
+        label: z.string(),
+        description: z.string(),
+        current: z.boolean(),
+        isDefault: z.boolean(),
+      })),
+    }),
+  }),
+
   // Session name update (extension → webview)
   z.object({
     type: z.literal("sessionName"),
