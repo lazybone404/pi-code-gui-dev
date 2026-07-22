@@ -33,7 +33,7 @@ import {
 
 
 
-  // ═══ Message Renderer Registry ════════════════════════════
+  // ═══ Section 1: Message Renderer Registry ═══════════════ ════════════════════════════
   //
   // Custom message types (from pi extensions) can register
   // renderers that produce DOM for the live panel.
@@ -129,7 +129,7 @@ export function createLiveCard(key: string, customType: string, label: string, c
     if (msg.type !== "stream-delta" && msg.type !== "thinking-delta" && msg.type !== "tool-update" && msg.type !== "bash-output") {
       logEvent("recv:" + msg.type, msg.data || msg);
     }
-    switch (msg.type) {
+    switch (msg.type) {  // see handlers/ directory for module organization {
       // Agent lifecycle
       case "agent-start":         handleAgentStart(); break;
       case "agent-end":           handleAgentEnd(); break;
@@ -616,7 +616,7 @@ export function handleThinkingDelta(data: any) {
 
   // ═══ Session Events ════════════════════════════════════
 
-  // ═══ In-webview status bar & nav bar ══════════════
+  // ═══ Section 2: Status Bar & Navigation ════════════════ & nav bar ══════════════
 
 // Nav bar elements (replaces old sbModel/sbThinking which are now in nav)
 var navSession = document.getElementById("nav-session");
@@ -2341,7 +2341,7 @@ export function handleSessionName(data: Record<string, unknown>): void {
   }
 }
 
-// ═══ In-webview dropdowns for model/thinking ═══════
+// ═══ Section 14: In-Webview Dropdowns ════════════════════ for model/thinking ═══════
 
 var _modelOptions: Array<{ provider: string; id: string; name?: string; current: boolean }> = [];
 var _thinkingOptions: Array<{ label: string; description: string; current: boolean; isDefault: boolean }> = [];
