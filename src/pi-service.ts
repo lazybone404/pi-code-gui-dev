@@ -33,6 +33,7 @@ export class PiService {
   private _thinkingLevel = "off";
   private _effort = "auto";
   private _isStreaming = false;
+  private _sessionNamed = false;
   private sessionId: string | null = null;
 
   // SDK root path (for re-importing individual modules)
@@ -504,6 +505,7 @@ export class PiService {
     this.session = result.session;
     this._thinkingLevel = resumeThinkingLevel;
     this.sessionId = this.session.sessionId;
+    this._sessionNamed = false;
 
     // Restore active tools from session file (if resuming)
     if (isResuming) {
@@ -970,6 +972,10 @@ export class PiService {
         this.currentAssistantToolCalls.clear();
         this.turnIndex = 0;
         this.emit({ type: "agent-start" });
+        // Auto-name session from first user message if unnamed
+        if (!this._sessionNamed) {
+          this._autoNameSession();
+        }
         break;
 
       case "agent_end":
@@ -1802,6 +1808,33 @@ export class PiService {
   }
 
   /** Walk session entries in reverse to find and apply the last tools_active_change. */
+  /** Auto-name the session from first user message (Claude Code style). */
+  private _autoNameSession(): void {
+    if (!this.sessionManager) { return; }
+    const entries = this.sessionManager.getEntries?.() ?? [];
+    // Find first user message
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    const firstUser = entries.find(
+      (e: any) => e.type === "message" && e.message?.role === "user",
+    );
+    if (!firstUser) { return; }
+    // Extract text content
+    let text = "";
+    const content = firstUser.message?.content;
+    if (typeof content === "string") {
+      text = content;
+    } else if (Array.isArray(content)) {
+      text = content.filter((c: any) => c.type === "text").map((c: any) => c.text).join(" ");
+      /* eslint-enable @typescript-eslint/no-explicit-any */
+    }
+    if (!text.trim()) { return; }
+    // First 30 chars as name
+    const name = text.replace(/\n/g, " ").trim().substring(0, 30);
+    if (!name) { return; }
+    this.setSessionName(name);
+    this._sessionNamed = true;
+  }
+
   private _restoreActiveToolsFromSession(): void {
     const entries = this.sessionManager?.getEntries?.() ?? [];
     if (!entries.length) { return; }
