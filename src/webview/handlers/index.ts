@@ -1303,11 +1303,11 @@ export function sendPrompt(): void {
   state.steerDropdown.addEventListener("click", function () {
     state.queueMode = state.queueMode === "steer" ? "queue" : "steer";
     if (state.queueMode === "queue") {
-      state.sendButton.textContent = "Queue";
+      state.sendButton.textContent = t("input.followUp");
       state.sendButton.title = "Queue (process after current turn)";
       state.steerDropdown.title = "Switch to Steer";
     } else {
-      state.sendButton.textContent = "Steer";
+      state.sendButton.textContent = t("input.steer");
       state.sendButton.title = "Steer (interrupt current request)";
       state.steerDropdown.title = "Switch to Queue";
     }

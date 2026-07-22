@@ -6,6 +6,7 @@
 // Internal helpers (syntax highlighters, parseDiffLine, etc.)
 // stay private; only the public API is exported.
 
+import { t } from "../locale.js";
 import { state, type AppState } from "../state.js";
 import { logEvent, logDom } from "../debug.js";
 import { highlightCode } from "../highlight.js";
@@ -217,7 +218,7 @@ export function scrollToBottom(): void {
 
 export function updateStreamingState(): void {
   if (state.isStreaming || state.isCompacting || state.isRetrying) {
-    state.sendButton.textContent = "Steer";
+    state.sendButton.textContent = t("input.steer");
     state.sendButton.title = "Steer (interrupt current request)";
     state.steerDropdown.classList.remove("hidden");
     state.abortButton.classList.remove("hidden");

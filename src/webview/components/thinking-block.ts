@@ -11,6 +11,7 @@
 
 import type { Component } from "./types.js";
 import { html } from "../render/html.js";
+import { t } from "../locale.js";
 
 export interface ThinkingBlockProps {
   content: string;
@@ -81,10 +82,10 @@ export class ThinkingBlock implements Component<ThinkingBlockProps> {
         this.contentEl.scrollHeight > this.contentEl.clientHeight + 2;
       if (this._collapsed) {
         this.expandBtn.style.display = overflowing ? "" : "none";
-        this.expandBtn.textContent = "Show more";
+        this.expandBtn.textContent = t("thinking.expand");
       } else {
         this.expandBtn.style.display = "";
-        this.expandBtn.textContent = "Show less";
+        this.expandBtn.textContent = t("thinking.collapse");
       }
     }
   }
@@ -93,12 +94,12 @@ export class ThinkingBlock implements Component<ThinkingBlockProps> {
     this._collapsed = !this._collapsed;
     if (this._collapsed) {
       this.el.classList.add("thinking-collapsed");
-      this.expandBtn.textContent = "Show more";
+      this.expandBtn.textContent = t("thinking.expand");
       this.contentEl.scrollTop = 0;
       this.el.scrollIntoView({ behavior: "smooth", block: "start" });
     } else {
       this.el.classList.remove("thinking-collapsed");
-      this.expandBtn.textContent = "Show less";
+      this.expandBtn.textContent = t("thinking.collapse");
     }
   }
 

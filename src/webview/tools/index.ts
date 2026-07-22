@@ -1,4 +1,5 @@
 import { state } from "../state.js";
+import { t } from "../locale.js";
 import { logEvent } from "../debug.js";
 import {
   createToolBlock, morphRender, escapeHtml, renderToolResult,
@@ -95,7 +96,7 @@ export const writeToolRenderer = {
       } else {
         var statusEl = el.querySelector(".tool-status");
         if (statusEl) {
-          statusEl.textContent = isError ? "error" : "done";
+          statusEl.textContent = isError ? t("tool.error") : t("tool.done");
           statusEl.className = "tool-status " + (isError ? "error" : "success");
         }
         el.setAttribute("data-status", isError ? "error" : "done");
@@ -272,7 +273,7 @@ export const editToolRenderer = {
       } else {
         var statusEl = el.querySelector(".tool-status");
         if (statusEl) {
-          statusEl.textContent = isError ? "error" : "done";
+          statusEl.textContent = isError ? t("tool.error") : t("tool.done");
           statusEl.className = "tool-status " + (isError ? "error" : "success");
         }
         el.setAttribute("data-status", isError ? "error" : "done");
@@ -453,7 +454,7 @@ export const readToolRenderer = {
       } else {
         var statusEl = el.querySelector(".tool-status");
         if (statusEl) {
-          statusEl.textContent = isError ? "error" : "done";
+          statusEl.textContent = isError ? t("tool.error") : t("tool.done");
           statusEl.className = "tool-status " + (isError ? "error" : "success");
         }
         el.setAttribute("data-status", isError ? "error" : "done");
@@ -573,7 +574,7 @@ export const defaultToolRenderer = {
     finalize: function (el: ToolEl, result: ToolResult, isError: boolean, entryId?: string) {
       var statusEl = el.querySelector(".tool-status");
       if (statusEl) {
-        statusEl.textContent = isError ? "error" : "done";
+        statusEl.textContent = isError ? t("tool.error") : t("tool.done");
         statusEl.className = "tool-status " + (isError ? "error" : "success");
       }
       el.setAttribute("data-status", isError ? "error" : "done");
@@ -738,7 +739,7 @@ export function handleToolStart(data: any) {
         block.setAttribute("data-status", "running");
         var statusEl = block.querySelector(".tool-status");
         if (statusEl) {
-          statusEl.textContent = "running";
+          statusEl.textContent = t("tool.running");
           statusEl.className = "tool-status running";
         }
       }
@@ -813,7 +814,7 @@ export function handleToolStart(data: any) {
     if (!data.fromMessage && renderer === defaultToolRenderer) {
       var statusEl2 = block.querySelector(".tool-status");
       if (statusEl2) {
-        statusEl2.textContent = "running";
+        statusEl2.textContent = t("tool.running");
         statusEl2.className = "tool-status running";
       }
       block.setAttribute("data-status", "running");
