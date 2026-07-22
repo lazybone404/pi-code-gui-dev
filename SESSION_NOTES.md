@@ -223,3 +223,83 @@ function foo(): string { return "bar"; }
 pnpm run compile    # check-types + lint + build
 npx tsc --noEmit    # 再次确认
 
+
+---
+
+## 七、第二轮重构：前端全面翻新
+
+### 时间线
+
+```
+CSS Token 系统  →  HTML 模板抽出  →  Handlers 分区  →  欢迎页重设计  →  内联下拉  →  侧栏切换  →  Tab 导航
+    day4               day4              day4              day4              day5          day5         day5
+```
+
+### 7.1 设计 Token 系统
+
+- 30+ CSS 自定义属性：间距、圆角、字体、阴影、语义色
+- 全部映射 VS Code 主题变量
+- CSS 从 1449 行精简到 400 行（+ legacy 样式 250 行）
+
+### 7.2 布局四段式
+
+```
+body (flex column)
+├── nav-bar (32px, fixed)
+│   ├── nav-tabs (session tabs, scrollable)
+│   ├── [+ new session]
+│   ├── nav-pill (model)
+│   └── nav-pill (thinking)
+├── chat-container (flex:1, scroll)
+├── input-area (card: border-radius + shadow + focus ring)
+└── status-bar (22px, metrics only)
+```
+
+### 7.3 侧栏 Webview（架构变更）
+
+**之前**：`vscode.window.createWebviewPanel` — Editor Panel，可关闭
+**之后**：`vscode.window.registerWebviewViewProvider` — 侧栏常驻
+
+关键文件：
+- `src/chat-view.ts` — ChatViewProvider 实现
+- `package.json` — `pi-code-gui.chat` webview view
+- `src/extension.ts` — `buildChatViewDeps()` 桥接会话管理
+
+### 7.4 Session Tab 导航
+
+- 每个会话一个 Tab（Claude Code 风格）
+- 点击切换，hover 显示关闭按钮
+- `+` 按钮新建
+- 动态渲染：`sessionTabs` 消息驱动
+
+### 7.5 内联下拉（全 webview）
+
+- 模型选择：nav-pill → dropdown
+- Thinking 选择：nav-pill → dropdown
+- Effort 选择：status bar → dropdown
+- Context budget：status bar → dropdown
+- 不再弹 VS Code QuickPick
+
+### 7.6 欢迎页修复
+
+| Bug | 原因 | 修复 |
+|------|------|------|
+| 已登录仍显示 | 竞态条件 | webviewReady 握手 |
+| 覆盖聊天历史 | `_sendAuthStatus` 异步后回调 | `_hasMessages` 标记 |
+| CLI 已配误判 | SDK 导入慢 | 先查 `DEEPSEEK_API_KEY` 环境变量 |
+
+### 7.7 Claude Code 借鉴清单
+
+| 模式 | 已抄 | 备注 |
+|------|------|------|
+| 侧栏常驻 | ✅ | `pi-code-gui.chat` |
+| 设计 Token 系统 | ✅ | `--pi-*` 变量 |
+| Tab 式会话切换 | ✅ | nav-tabs |
+| 卡片式输入 | ✅ | border-radius + shadow |
+| 内联下拉菜单 | ✅ | nav-dropdown |
+| 0.5px 工具卡片 | ✅ | tool-block |
+| 26px 会话列表 | ⏳ | 后续可做 hover 时间/操作切换 |
+| @mention | - | pi 不支持，跳过 |
+| OAuth URL 显示 | - | pi 用 API key，不需要 |
+| Input footer 栏 | ⏳ | 下阶段 |
+| 设置 overlay | ⏳ | 下阶段 |
