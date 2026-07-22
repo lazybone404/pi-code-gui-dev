@@ -26,76 +26,76 @@
     "commands": [
       {
         "command": "pi-code-gui.codeAgent",
-        "title": "PiGui: Code Agent",
+        "title": "%command.codeAgent%",
         "icon": "$(hubot)"
       },
       {
         "command": "pi-code-gui.abort",
-        "title": "PiGui: Abort"
+        "title": "%command.abort%"
       },
       {
         "command": "pi-code-gui.installPi",
-        "title": "PiGui: Install Pi Coding Agent"
+        "title": "%command.installPi%"
       },
       {
         "command": "pi-code-gui.pickModel",
-        "title": "PiGui: Switch Model"
+        "title": "%command.switchModel%"
       },
       {
         "command": "pi-code-gui.cycleModel",
-        "title": "PiGui: Cycle Model"
+        "title": "%command.cycleModel%"
       },
       {
         "command": "pi-code-gui.pickThinkingLevel",
-        "title": "PiGui: Set Thinking Level"
+        "title": "%command.setThinkingLevel%"
       },
       {
         "command": "pi-code-gui.cycleThinkingLevel",
-        "title": "PiGui: Cycle Thinking Level"
+        "title": "%command.cycleThinkingLevel%"
       },
       {
         "command": "pi-code-gui.pickFile",
-        "title": "PiGui: Pick File to Reference"
+        "title": "%command.pickFile%"
       },
       {
         "command": "pi-code-gui.pickCommand",
-        "title": "PiGui: Slash Command Picker"
+        "title": "%command.pickCommand%"
       },
       {
         "command": "pi-code-gui.pickFork",
-        "title": "PiGui: Fork Session from Message"
+        "title": "%command.forkSession%"
       },
       {
         "command": "pi-code-gui.exportSession",
-        "title": "PiGui: Export Session to HTML"
+        "title": "%command.exportSession%"
       },
       {
         "command": "pi-code-gui.cloneSession",
-        "title": "PiGui: Clone Session"
+        "title": "%command.cloneSession%"
       },
       {
         "command": "pi-code-gui.login",
-        "title": "PiGui: Set Up API Key / Login"
+        "title": "%command.login%"
       },
       {
         "command": "pi-code-gui.resumeSession",
-        "title": "PiGui: Resume Session"
+        "title": "%command.resumeSession%"
       },
       {
         "command": "pi-code-gui.compact",
-        "title": "PiGui: Compact Context"
+        "title": "%command.compact%"
       },
       {
         "command": "pi-code-gui.toggleAutoCompaction",
-        "title": "PiGui: Toggle Auto-Compaction"
+        "title": "%command.toggleAutoCompaction%"
       },
       {
         "command": "pi-code-gui.toggleAutoRetry",
-        "title": "PiGui: Toggle Auto-Retry"
+        "title": "%command.toggleAutoRetry%"
       },
       {
         "command": "pi-code-gui.addSession",
-        "title": "PiGui: Add Pi Session",
+        "title": "%command.addSession%",
         "icon": {
           "light": "media/pi-editor-button.svg",
           "dark": "media/pi-editor-dark.svg"
@@ -103,87 +103,87 @@
       },
       {
         "command": "pi-code-gui.revealEntry",
-        "title": "PiGui: Reveal Entry in Chat"
+        "title": "%command.revealEntry%"
       },
       {
         "command": "pi-code-gui.copyEntryText",
-        "title": "PiGui: Copy Entry Text"
+        "title": "%command.copyEntryText%"
       },
       {
         "command": "pi-code-gui.focusSession",
-        "title": "PiGui: Focus Session"
+        "title": "%command.focusSession%"
       },
       {
         "command": "pi-code-gui.pickSessionModel",
-        "title": "PiGui: Pick Model for Session"
+        "title": "%command.pickSessionModel%"
       },
       {
         "command": "pi-code-gui.pickSessionThinking",
-        "title": "PiGui: Pick Thinking Level for Session"
+        "title": "%command.pickSessionThinking%"
       },
       {
         "command": "pi-code-gui.reloadContext",
-        "title": "PiGui: Reload Context Files"
+        "title": "%command.reloadContext%"
       },
       {
         "command": "pi-code-gui.forkSession",
-        "title": "PiGui: Fork Session from Message"
+        "title": "%command.forkSession%"
       },
       {
         "command": "pi-code-gui.resumePastSession",
-        "title": "PiGui: Resume Past Session"
+        "title": "%command.resumePastSession%"
       },
       {
         "command": "pi-code-gui.deletePastSession",
-        "title": "PiGui: Delete Past Session"
+        "title": "%command.deletePastSession%"
       },
       {
         "command": "pi-code-gui.deleteAllPastSessions",
-        "title": "PiGui: Delete All Past Sessions",
+        "title": "%command.deleteAllPastSessions%",
         "icon": "$(trash)"
       },
       {
         "command": "pi-code-gui.filterPastSessions",
-        "title": "PiGui: Filter Past Sessions",
+        "title": "%command.filterPastSessions%",
         "icon": "$(filter)"
       },
       {
         "command": "pi-code-gui.installPackage",
-        "title": "PiGui: Install Package"
+        "title": "%command.installPackage%"
       },
       {
         "command": "pi-code-gui.uninstallPackage",
-        "title": "PiGui: Uninstall Package"
+        "title": "%command.uninstallPackage%"
       },
       {
         "command": "pi-code-gui.searchPackages",
-        "title": "PiGui: Search Packages",
+        "title": "%command.searchPackages%",
         "icon": "$(search)"
       },
       {
         "command": "pi-code-gui.refreshPackages",
-        "title": "PiGui: Refresh Packages",
+        "title": "%command.refreshPackages%",
         "icon": "$(refresh)"
       },
       {
         "command": "pi-code-gui.updatePackage",
-        "title": "PiGui: Update Package"
+        "title": "%command.updatePackage%"
       },
       {
         "command": "pi-code-gui.updateAllPackages",
-        "title": "PiGui: Update All Packages",
+        "title": "%command.updateAllPackages%",
         "icon": "$(sync)"
       },
       {
         "command": "pi-code-gui.openPiDevMarketplace",
-        "title": "PiGui: Open Pi.dev Marketplace"
+        "title": "%command.openDevMarketplace%"
       }
     ],
     "viewsContainers": {
       "activitybar": [
         {
           "id": "pi-code-gui",
-          "title": "Pi Code Gui",
+          "title": "%viewContainer.title%",
           "icon": "media/pi-activity.svg"
         }
       ]
@@ -193,13 +193,13 @@
         {
           "type": "tree",
           "id": "pi-code-gui.sessions",
-          "name": "Sessions",
+          "name": "%view.sessions%",
           "icon": "multiple-windows"
         },
         {
           "type": "tree",
           "id": "pi-code-gui.packages",
-          "name": "Packages",
+          "name": "%view.packages%",
           "icon": "package"
         }
       ]
@@ -237,52 +237,52 @@
       }
     ],
     "configuration": {
-      "title": "Pi Code Gui",
+      "title": "%config.title%",
       "properties": {
         "pi-code-gui.promptToInstall": {
           "type": "boolean",
           "default": true,
-          "description": "Prompt to install Pi if not found"
+          "description": "%config.promptToInstall%"
         },
         "pi-code-gui.anthropicApiKey": {
           "type": "string",
           "default": "",
-          "description": "Anthropic API key for Claude models (overrides ANTHROPIC_API_KEY env var at runtime)"
+          "description": "%config.anthropicApiKey%"
         },
         "pi-code-gui.openaiApiKey": {
           "type": "string",
           "default": "",
-          "description": "OpenAI API key for GPT models (overrides OPENAI_API_KEY env var at runtime)"
+          "description": "%config.openaiApiKey%"
         },
         "pi-code-gui.systemPromptAppend": {
           "type": "string",
           "default": "",
-          "description": "Additional instructions appended to the pi system prompt"
+          "description": "%config.systemPromptAppend%"
         },
         "pi-code-gui.enableSkills": {
           "type": "boolean",
           "default": true,
-          "description": "Load project and global pi skills"
+          "description": "%config.enableSkills%"
         },
         "pi-code-gui.enableContextFiles": {
           "type": "boolean",
           "default": true,
-          "description": "Inject project context files (AGENTS.md, inferred project guidelines)"
+          "description": "%config.enableContextFiles%"
         },
         "pi-code-gui.enablePromptTemplates": {
           "type": "boolean",
           "default": true,
-          "description": "Register custom slash commands (e.g. /fix-diagnostics, /explain-code)"
+          "description": "%config.enablePromptTemplates%"
         },
         "pi-code-gui.defaultModelProvider": {
           "type": "string",
           "default": "",
-          "description": "Default model provider (e.g. 'anthropic'). Empty = auto-detect first available."
+          "description": "%config.defaultModelProvider%"
         },
         "pi-code-gui.defaultModelId": {
           "type": "string",
           "default": "",
-          "description": "Default model ID (e.g. 'claude-sonnet-4-5'). Requires defaultModelProvider to be set."
+          "description": "%config.defaultModelId%"
         },
         "pi-code-gui.defaultThinkingLevel": {
           "type": "string",
@@ -295,22 +295,22 @@
             "high",
             "xhigh"
           ],
-          "description": "Default thinking level for new sessions"
+          "description": "%config.defaultThinkingLevel%"
         },
         "pi-code-gui.contextBudget": {
           "type": "number",
           "default": 0,
-          "description": "Per-session token budget. 0 = use model default. Increase for longer conversations before auto-compaction."
+          "description": "%config.contextBudget%"
         },
         "pi-code-gui.sessionDir": {
           "type": "string",
           "default": "",
-          "description": "Custom session storage directory for session .jsonl files. Empty = use the pi SDK default (~/.pi/agent/sessions/). Equivalent to --session-dir."
+          "description": "%config.sessionDir%"
         },
         "pi-code-gui.autoOpenOnStart": {
           "type": "boolean",
           "default": true,
-          "description": "Automatically open the Pi chat tab when VS Code starts. When disabled, sessions initialize in the background but the tab is not revealed until you open it manually."
+          "description": "%config.autoOpenOnStart%"
         }
       }
     },
