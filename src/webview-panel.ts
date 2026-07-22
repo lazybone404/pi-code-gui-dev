@@ -448,20 +448,29 @@ export class PiWebviewPanel {
   <link rel="stylesheet" href="${styleUri}">
 </head>
 <body>
-  <div id="chat-container">
-    <!-- Top navigation bar: always visible -->
-    <div id="topbar" class="topbar">
-      <span id="topbar-title" class="topbar-title">Pi Code Gui</span>
-      <div class="topbar-actions">
-        <button id="topbar-history-btn" class="topbar-btn" title="Search & switch sessions">
-          📋
-        </button>
-      </div>
+  <!-- Fixed top bar: session name + actions -->
+  <div id="topbar" class="topbar">
+    <span id="topbar-title" class="topbar-title">Pi Code Gui</span>
+    <div class="topbar-actions">
+      <button id="topbar-history-btn" class="topbar-btn" title="Search & switch sessions">
+        📋
+      </button>
     </div>
-    <div id="welcome" class="welcome-message" style="display:none">
   </div>
 
-  <div id="live-panel"></div>
+  <!-- Scrollable chat area -->
+  <div id="chat-container">
+    <div id="welcome" class="welcome-message" style="display:none">
+      <div class="welcome-icon">π</div>
+      <h2>Pi Code Gui</h2>
+      <p class="welcome-subtitle">AI coding assistant in VS Code</p>
+      <div class="welcome-hints">
+        <button id="welcome-login-btn" class="welcome-btn">Set Up API Key / Login</button>
+        <p class="welcome-or">or set <code>DEEPSEEK_API_KEY</code> in environment variables</p>
+      </div>
+    </div>
+    <div id="live-panel"></div>
+  </div>
 
   <div id="attachment-bar"></div>
 
@@ -483,7 +492,6 @@ export class PiWebviewPanel {
     <div class="pi-sb-item spacer"></div>
     <div class="pi-sb-item" id="pi-sb-usage" title="Click to set context budget">0%</div>
     <div class="pi-sb-item" id="pi-sb-settings" title="Settings">⚙</div>
-  </div>
   </div>
 
   <div class="user-msg-selector-overlay" id="user-msg-overlay"></div>
