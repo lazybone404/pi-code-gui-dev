@@ -180,7 +180,7 @@ body {
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 4px;
   padding: var(--pi-space-xl) var(--pi-space-xl) 40px;
 }
 
@@ -339,7 +339,7 @@ body {
 
 /* ═══ Messages ═════════════════════════════════════════════ */
 .message {
-  padding: var(--pi-space-xs) 0;
+  padding: var(--pi-space-sm) 0;
   line-height: 1.5;
 }
 .message.assistant {}
@@ -349,7 +349,7 @@ body {
   background: var(--pi-bg-input);
   border: 1px solid var(--pi-border-input);
   border-radius: var(--pi-radius-md);
-  padding: var(--pi-space-sm) var(--pi-space-md);
+  padding: var(--pi-space-md) var(--pi-space-lg);
 }
 .message.system {
   color: var(--pi-fg-tertiary);
