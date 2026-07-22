@@ -617,17 +617,41 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // ── Filter past sessions ────────────────────────────
   context.subscriptions.push(
     vscode.commands.registerCommand("pi-code-gui.filterPastSessions", async () => {
-      const currentFilter = sessionTreeProvider?.pastFilter ?? "";
-      const filter = await vscode.window.showInputBox({
-        prompt: "Filter past sessions by title or content",
-        placeHolder: "Type to filter...",
-        value: currentFilter,
-      });
-      if (filter === undefined) { return; } // cancelled
-      if (sessionTreeProvider) {
-        sessionTreeProvider.pastFilter = filter;
-        sessionTreeProvider.refresh();
+      const pastSessions = sessionTreeProvider?.pastSessions ?? [];
+      if (pastSessions.length === 0) {
+        vscode.window.showInformationMessage("No past sessions to search.");
+        return;
       }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const items = pastSessions.map((s: any) => ({
+        label: s.name || truncate(s.firstMessage || "(no messages)", 50),
+        description: [
+          s.messageCount ? `${s.messageCount} msgs` : "",
+          s.model || "",
+          s.tokenCount ? formatTokens(s.tokenCount) : "",
+          s.modified ? `· ${formatRelativeTime(new Date(s.modified))}` : "",
+        ].filter(Boolean).join(" "),
+        session: s,
+      }));
+
+      const qp = vscode.window.createQuickPick();
+      qp.items = items;
+      qp.placeholder = "Search sessions by title or content...";
+      qp.matchOnDescription = true;
+      qp.matchOnDetail = true;
+
+      qp.onDidAccept(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const selected = qp.selectedItems[0] as any;
+        if (selected?.session?.path) {
+          qp.hide();
+          vscode.commands.executeCommand("pi-code-gui.resumePastSession", selected.session.path);
+        }
+      });
+
+      qp.onDidHide(() => qp.dispose());
+      qp.show();
     }),
   );
 
