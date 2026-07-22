@@ -5,6 +5,7 @@ import { createBridgeTools } from "./bridge-tools.js";
 import { type PiServiceEvent, validateExtensionToWebview } from "./types.js";
 import { piLog, piWarn } from "./logger.js";
 import { AuthService } from "./services/auth.js";
+import { ModelService } from "./services/model.js";
 
 /** Find the last element matching predicate (ES2023 findLast polyfill). */
 function reverseFind<T>(arr: T[], pred: (el: T) => boolean): T | undefined {
@@ -319,6 +320,7 @@ export class PiService {
   private modelRuntime: any = null;
   private modelRegistry: any = null;
   private authService: AuthService | null = null;
+  private modelService: ModelService | null = null;
   private settingsManager: any = null;
   private sessionManager: any = null;
   private resourceLoader: any = null;
@@ -550,6 +552,21 @@ export class PiService {
         ai: this.AI,
         get model() { return this._model; },
         setModel: (provider: string, modelId: string) => this.setModel(provider, modelId),
+      });
+      // ModelService needs PiService's internal state — capture via closure
+      const pi = this;
+      this.modelService = new ModelService({
+        ai: this.AI,
+        modelRegistry: this.modelRegistry,
+        get session() { return pi.session; },
+        get model() { return pi._model; },
+        set model(m: { id?: string; provider?: string } | null) { pi._model = m; },
+        get thinkingLevel() { return pi._thinkingLevel; },
+        set thinkingLevel(l: string) { pi._thinkingLevel = l; },
+        cycleModels: pi.cycleModels,
+        cycleIndex: pi.cycleIndex,
+        forcePersistEntry: (entry: Record<string, unknown>) => pi._forcePersistEntry(entry),
+        reportStatus: () => pi.reportStatus(),
       });
       this.settingsManager = SDK.SettingsManager.create(cwd);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1816,123 +1833,25 @@ export class PiService {
   }
 
   async setModel(provider: string, modelId: string): Promise<void> {
-    if (!this.session || !this.AI) {
-      piWarn(`setModel("${provider}/${modelId}") ignored: session not initialized`);
-      return;
-    }
-    // Try registry first, then fall back to getModel
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let model: any = null;
-    if (this.modelRegistry) {
-      model = this.modelRegistry.find(provider, modelId);
-    }
-    if (!model) {
-      model = this.AI.getModel(provider, modelId);
-    }
-    if (model) {
-      await this.session.setModel(model);
-      this._model = { id: modelId, provider };
-      this.cycleIndex = this.cycleModels.findIndex((m) => m.provider === provider && m.id === modelId);
-      if (this.cycleIndex === -1) { this.cycleIndex = 0; }
-      // Force-persist the model change so it survives session close/reopen
-      this._forcePersistEntry({
-        type: "model_change",
-        id: `pi-ext-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        parentId: null,
-        timestamp: new Date().toISOString(),
-        provider,
-        modelId,
-      });
-      this.reportStatus();
-    }
+    await this.modelService?.setModel(provider, modelId);
   }
 
   async cycleModel(): Promise<void> {
-    if (!this.session || !this.AI) {
-      vscode.window.showWarningMessage("Pi session not ready yet.");
-      return;
-    }
-    if (this.cycleModels.length === 0) {
-      vscode.window.showWarningMessage("No models available. Configure an API key first.");
-      return;
-    }
-    this.cycleIndex = (this.cycleIndex + 1) % this.cycleModels.length;
-    const next = this.cycleModels[this.cycleIndex];
-    const model = this.AI.getModel(next.provider, next.id);
-    if (model) {
-      const prevId = this._model?.id ?? "?";
-      await this.session.setModel(model);
-      this._model = { id: next.id, provider: next.provider };
-      if (this.cycleModels.length <= 1) {
-        vscode.window.showInformationMessage(`Only ${next.id} configured. Click the model name in the status bar to add more.`);
-      } else {
-        vscode.window.showInformationMessage(`Model: ${prevId} → ${next.id}`);
-      }
-      this.reportStatus();
-    }
+    await this.modelService?.cycleModel();
   }
 
   async setThinkingLevel(level: string): Promise<void> {
-    if (!this.session) {
-      piWarn(`setThinkingLevel("${level}") ignored: session not initialized`);
-      return;
-    }
-    this.session.setThinkingLevel(level);
-    this._thinkingLevel = level;
-    this.reportStatus();
-    // Force-persist the thinking change so it survives session close/reopen
-    this._forcePersistEntry({
-      type: "thinking_level_change",
-      id: `pi-ext-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      parentId: null,
-      timestamp: new Date().toISOString(),
-      thinkingLevel: level,
-    });
+    await this.modelService?.setThinkingLevel(level);
   }
 
-  // ── Default model / thinking persistence ──────────────
+  // ── Default model / thinking persistence (delegates) ─
 
-  /** Save the current model as the default for future sessions. */
-  saveDefaultModel(): void {
-    if (!this._model?.provider || !this._model?.id) {
-      piWarn("saveDefaultModel() called but no model is active — ignoring");
-      return;
-    }
-    const cfg = vscode.workspace.getConfiguration("pi-code-gui");
-    cfg.update("defaultModelProvider", this._model.provider, vscode.ConfigurationTarget.Global);
-    cfg.update("defaultModelId", this._model.id, vscode.ConfigurationTarget.Global);
-  }
-
-  /** Save the current thinking level as the default for future sessions. */
-  saveDefaultThinking(): void {
-    const cfg = vscode.workspace.getConfiguration("pi-code-gui");
-    cfg.update("defaultThinkingLevel", this._thinkingLevel, vscode.ConfigurationTarget.Global);
-  }
-
-  /** Get the configured default model (if any). */
-  getDefaultModel(): { provider: string; id: string } | null {
-    const cfg = vscode.workspace.getConfiguration("pi-code-gui");
-    const provider = cfg.get<string>("defaultModelProvider");
-    const id = cfg.get<string>("defaultModelId");
-    return (provider && id) ? { provider, id } : null;
-  }
-
-  /** Get the configured default thinking level. */
-  getDefaultThinking(): string {
-    return vscode.workspace.getConfiguration("pi-code-gui").get<string>("defaultThinkingLevel") ?? "off";
-  }
-
-  /** Get the current context budget (0 = model default). */
-  getContextBudget(): number {
-    return vscode.workspace.getConfiguration("pi-code-gui").get<number>("contextBudget") ?? 0;
-  }
-
-  /** Save context budget setting (requires restart to take effect). */
-  async setContextBudget(budget: number): Promise<void> {
-    const cfg = vscode.workspace.getConfiguration("pi-code-gui");
-    await cfg.update("contextBudget", budget, vscode.ConfigurationTarget.Global);
-    this.reportStatus();
-  }
+  saveDefaultModel(): void { this.modelService?.saveDefaultModel(); }
+  saveDefaultThinking(): void { this.modelService?.saveDefaultThinking(); }
+  getDefaultModel(): { provider: string; id: string } | null { return this.modelService?.getDefaultModel() ?? null; }
+  getDefaultThinking(): string { return this.modelService?.getDefaultThinking() ?? "off"; }
+  getContextBudget(): number { return this.modelService?.getContextBudget() ?? 0; }
+  async setContextBudget(budget: number): Promise<void> { await this.modelService?.setContextBudget(budget); }
 
   // ── Settings, models, scoped models ──────────────────
 
@@ -1941,149 +1860,24 @@ export class PiService {
   get showImages(): boolean { return this._showImages; }
   get userMessages(): Array<{ id: string; text: string; timestamp?: number }> { return this._userMessages; }
 
-  /** Get available models from the model registry (for dynamic model pickers). */
   async getAvailableModels(): Promise<Array<{ provider: string; id: string; name?: string; cost?: { input: number; output: number }; contextWindow?: number }>> {
-    if (!this.modelRegistry) { return []; }
-    try {
-      const available = await this.modelRegistry.getAvailable();
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return available.map((m: any) => ({
-        provider: m.provider,
-        id: m.id,
-        name: m.name,
-        cost: m.cost ? { input: m.cost.input, output: m.cost.output } : undefined,
-        contextWindow: m.contextWindow ?? undefined,
-      }));
-    } catch {
-      return [];
-    }
+    return this.modelService?.getAvailableModels() ?? [];
   }
 
-  /** Format model specs (pricing + context window) for QuickPick detail. Returns empty string if no data. */
   static formatModelDetail(cost?: { input: number; output: number }, contextWindow?: number): string {
-    const parts: string[] = [];
-    if (cost) {
-      parts.push(`$${cost.input}/$${cost.output} per M tokens`);
-    }
-    if (contextWindow) {
-      parts.push(`${Math.round(contextWindow / 1000)}K context`);
-    }
-    return parts.join(" · ");
+    return ModelService.formatModelDetail(cost, contextWindow);
   }
 
-  /** Open a QuickPick to choose a model, set it on this session, and optionally save as default. */
   async pickModel(): Promise<boolean> {
-    interface ModelItem { label: string; provider: string; modelId: string; cost?: { input: number; output: number }; contextWindow?: number }
-    let models: ModelItem[] = [];
-
-    try {
-      const available = await this.getAvailableModels();
-      if (available.length > 0) {
-        models = available.map((m) => ({
-          label: m.name || m.id,
-          provider: m.provider,
-          modelId: m.id,
-          cost: m.cost,
-          contextWindow: m.contextWindow,
-        }));
-      }
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (e: any) {
-      piWarn(`pickModel: getAvailableModels failed (${e.message}), using static fallback`);
-    }
-
-    // Fallback: static list of common models (no pricing — only SDK-reported pricing is shown)
-    if (models.length === 0) {
-      models = [
-        { label: "Claude Sonnet 4.5", provider: "anthropic", modelId: "claude-sonnet-4-5" },
-        { label: "Claude Haiku 4.5", provider: "anthropic", modelId: "claude-haiku-4-5" },
-        { label: "Claude Opus 4.5", provider: "anthropic", modelId: "claude-opus-4-5" },
-        { label: "GPT 4o", provider: "openai", modelId: "gpt-4o" },
-        { label: "Gemini 2.5 Pro", provider: "google", modelId: "gemini-2.5-pro" },
-        { label: "DeepSeek V3", provider: "deepseek", modelId: "deepseek-chat" },
-      ];
-    }
-
-    const currentId = this.model?.id;
-    const defModel = this.getDefaultModel();
-    const items = models.map((m) => {
-      const isDefault = defModel && m.provider === defModel.provider && m.modelId === defModel.id;
-      return {
-        label: `${m.label}${m.modelId === currentId ? " $(check)" : ""}${isDefault ? " \u2605" : ""}`,
-        description: m.provider,
-        detail: PiService.formatModelDetail(m.cost, m.contextWindow),
-        provider: m.provider,
-        modelId: m.modelId,
-        isDefault,
-      };
-    });
-
-    const picked = await vscode.window.showQuickPick(items, { placeHolder: "Select model (\u2605 = default)", matchOnDetail: true });
-    if (!picked) { return false; }
-
-    await this.setModel(picked.provider, picked.modelId);
-
-    // Offer to save as default if not already
-    if (!picked.isDefault) {
-      const save = await vscode.window.showQuickPick(
-        [{ label: "\u2605 Save as default", description: "Use this model for future sessions" }],
-        { placeHolder: `Use as default?` },
-      );
-      if (save) { this.saveDefaultModel(); }
-    }
-
-    return true;
+    return this.modelService?.pickModel() ?? false;
   }
 
-  /** Open a QuickPick to choose a thinking level, set it on this session, and optionally save as default. */
   async pickThinkingLevel(): Promise<boolean> {
-    const levels = [
-      { label: "off", description: "No thinking" },
-      { label: "minimal", description: "Minimal thinking" },
-      { label: "low", description: "Brief thinking" },
-      { label: "medium", description: "Balanced thinking" },
-      { label: "high", description: "Extended thinking" },
-      { label: "xhigh", description: "Maximum thinking" },
-    ];
-    const current = this.thinkingLevel;
-    const defLevel = this.getDefaultThinking();
-    const items = levels.map((l) => {
-      const isDefault = l.label === defLevel;
-      return {
-        label: `${l.label === current ? "$(check) " : ""}${l.label}${isDefault ? " \u2605" : ""}`,
-        description: l.description,
-        level: l.label,
-        isDefault,
-      };
-    });
-
-    const picked = await vscode.window.showQuickPick(items, { placeHolder: "Select thinking level (\u2605 = default)" });
-    if (!picked) { return false; }
-
-    await this.setThinkingLevel(picked.level);
-
-    // Offer to save as default if not already
-    if (!picked.isDefault) {
-      const save = await vscode.window.showQuickPick(
-        [{ label: "\u2605 Save as default", description: "Use this thinking level for future sessions" }],
-        { placeHolder: `Use "${picked.level}" thinking as the default?` },
-      );
-      if (save) { this.saveDefaultThinking(); }
-    }
-
-    return true;
+    return this.modelService?.pickThinkingLevel() ?? false;
   }
 
-  /** Get scoped models from the session */
   getScopedModels(): Array<{ provider: string; id: string; thinkingLevel: string }> {
-    if (!this.session || !this.session.scopedModels) { return []; }
-    return this.session.scopedModels
-      .filter((s: Record<string, unknown>) => s.model !== null && s.model !== undefined)
-      .map((s: Record<string, unknown>) => ({
-        provider: (s.model as Record<string, unknown>).provider as string,
-        id: (s.model as Record<string, unknown>).id as string,
-        thinkingLevel: (s.thinkingLevel as string) ?? "off",
-      }));
+    return this.modelService?.getScopedModels() ?? [];
   }
 
   emitScopedModels(): void {
