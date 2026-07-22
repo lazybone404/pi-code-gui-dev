@@ -84,5 +84,12 @@
   "auth.selectMethod": "选择认证方式：",
   "auth.selectOAuthProvider": "选择订阅提供商：",
   "auth.selectApiKeyProvider": "选择 API Key 提供商：",
-  "auth.selectProviderLogout": "选择要登出的提供商："
+  "auth.selectProviderLogout": "选择要登出的提供商：",
+  "settings.autoCompaction": "自动压缩",
+  "settings.autoRetry": "自动重试",
+  "settings.showImages": "显示图片",
+  "settings.title": "设置",
+  "compaction.compacted": "已压缩",
+  "compaction.expand": "（点击展开）",
+  "compaction.tokens": "tokens"
 }

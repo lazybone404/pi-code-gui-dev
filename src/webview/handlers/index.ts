@@ -1,5 +1,5 @@
 import { state } from "../state.js";
-import { setLocale, t } from "../locale.js";
+import { setLocale, t, getLocale } from "../locale.js";
 import { logEvent, logDom, summary as debugSummary, debugEventLog } from "../debug.js";
 import {
   renderMarkdown, renderBlock, renderInline, patchBlockList,
@@ -959,48 +959,57 @@ export function addStatusMessage(message: string) {
   }
 
 export function showQuickstartGuide() {
-    // Remove any previous guide
     var existing = document.getElementById("quickstart-guide");
     if (existing) {existing.remove();}
 
     var el = document.createElement("div");
     el.id = "quickstart-guide";
     el.className = "message assistant";
-    el.innerHTML =
-      '<details class="thinking-block" open>' +
-      '<summary>📖 Getting started with Pi</summary>' +
-      '<div class="quickstart-content">' +
 
-      '<h3>1. Get an API key</h3>' +
-      '<p>Pi works with any LLM provider. You need at least one:</p>' +
-      '<ul>' +
-      '<li><strong>Anthropic (Claude)</strong> — <a href="https://console.anthropic.com/">console.anthropic.com</a> → API Keys</li>' +
-      '<li><strong>OpenAI</strong> — <a href="https://platform.openai.com/api-keys">platform.openai.com/api-keys</a></li>' +
-      '<li><strong>Google Gemini</strong> — <a href="https://aistudio.google.com/apikey">aistudio.google.com</a> (free tier)</li>' +
-      '<li><strong>DeepSeek</strong> — <a href="https://platform.deepseek.com/api_keys">platform.deepseek.com</a> (very cheap)</li>' +
-      '</ul>' +
-
-      '<h3>🆓 Free & local options</h3>' +
-      '<ul>' +
-      '<li><strong>Ollama</strong> — run models locally or use cloud-hosted. <a href="https://ollama.com">ollama.com</a></li>' +
-      '<li><strong>OpenRouter</strong> — unified API with free models. <a href="https://openrouter.ai/models?max_price=0">openrouter.ai/models?max_price=0</a></li>' +
-      '<li><strong>GitHub Copilot</strong> — use <code>/login</code> in Pi and select Copilot (included with GitHub Copilot subscription)</li>' +
-      '</ul>' +
-
-      '<h3>2. Set the key</h3>' +
-      '<p><strong>Option A:</strong> Run <strong>PiGui: Set Up API Key / Login</strong> from the command palette (<code>Ctrl+Shift+P</code>)</p>' +
-      '<p><strong>Option B:</strong> Set an environment variable before opening VS Code:</p>' +
-      '<pre><code>export ANTHROPIC_API_KEY=sk-ant-...\n# or\nexport OPENAI_API_KEY=sk-...</code></pre>' +
-
-      '<h3>3. Start chatting</h3>' +
-      '<p>Once your key is set, type a request and press Enter:</p>' +
-      '<pre><code>Summarize this project and tell me how to run its checks.</code></pre>' +
-
-      '<p style="margin-top:12px"><a href="https://pi.dev/docs/latest/quickstart">📚 Full quickstart guide →</a>  ·  ' +
-      '<a href="https://pi.dev/docs/latest/providers">🔑 All supported providers →</a></p>' +
-
-      '</div>' +
-      '</details>';
+    var isZh = getLocale().startsWith("zh");
+    el.innerHTML = isZh
+      ? '<details class="thinking-block" open>' +
+        '<summary>📖 Pi 快速入门</summary>' +
+        '<div class="quickstart-content">' +
+        '<h3>1. 获取 API Key</h3>' +
+        '<p>Pi 支持多种模型提供商，至少配一个：</p>' +
+        '<ul>' +
+        '<li><strong>DeepSeek</strong> — <a href="https://platform.deepseek.com/api_keys">platform.deepseek.com</a>（便宜好用）</li>' +
+        '<li><strong>Anthropic (Claude)</strong> — <a href="https://console.anthropic.com/">console.anthropic.com</a> → API Keys</li>' +
+        '<li><strong>OpenAI</strong> — <a href="https://platform.openai.com/api-keys">platform.openai.com/api-keys</a></li>' +
+        '<li><strong>Google Gemini</strong> — <a href="https://aistudio.google.com/apikey">aistudio.google.com</a>（免费额度）</li>' +
+        '</ul>' +
+        '<h3>2. 配置 Key</h3>' +
+        '<p><strong>方式一：</strong>命令面板 <code>Ctrl+Shift+P</code> → <strong>PiGui: 设置 API Key / 登录</strong></p>' +
+        '<p><strong>方式二：</strong>环境变量：</p>' +
+        '<pre><code>export DEEPSEEK_API_KEY=sk-...</code></pre>' +
+        '<h3>3. 开始对话</h3>' +
+        '<p>配好 Key 后输入一句话试试：</p>' +
+        '<pre><code>帮我看看这个项目是干什么的</code></pre>' +
+        '<p style="margin-top:12px"><a href="https://pi.dev/docs/latest/quickstart">📚 完整快速入门 →</a></p>' +
+        '</div>' +
+        '</details>'
+      : '<details class="thinking-block" open>' +
+        '<summary>📖 Getting started with Pi</summary>' +
+        '<div class="quickstart-content">' +
+        '<h3>1. Get an API key</h3>' +
+        '<p>Pi works with any LLM provider. At least one is needed:</p>' +
+        '<ul>' +
+        '<li><strong>DeepSeek</strong> — <a href="https://platform.deepseek.com/api_keys">platform.deepseek.com</a> (cheap & fast)</li>' +
+        '<li><strong>Anthropic (Claude)</strong> — <a href="https://console.anthropic.com/">console.anthropic.com</a> → API Keys</li>' +
+        '<li><strong>OpenAI</strong> — <a href="https://platform.openai.com/api-keys">platform.openai.com/api-keys</a></li>' +
+        '<li><strong>Google Gemini</strong> — <a href="https://aistudio.google.com/apikey">aistudio.google.com</a> (free tier)</li>' +
+        '</ul>' +
+        '<h3>2. Set the key</h3>' +
+        '<p><strong>Option A:</strong> <code>Ctrl+Shift+P</code> → <strong>PiGui: Set Up API Key / Login</strong></p>' +
+        '<p><strong>Option B:</strong> Set an environment variable:</p>' +
+        '<pre><code>export DEEPSEEK_API_KEY=sk-...</code></pre>' +
+        '<h3>3. Start chatting</h3>' +
+        '<p>Once your key is set, try asking:</p>' +
+        '<pre><code>Summarize this project for me</code></pre>' +
+        '<p style="margin-top:12px"><a href="https://pi.dev/docs/latest/quickstart">📚 Full quickstart guide →</a></p>' +
+        '</div>' +
+        '</details>';
     state.chatContainer.appendChild(el);
   }
 
@@ -1506,7 +1515,7 @@ export function handleCompactionSummaryMessage(data: any) {
     var summaryId = "cs-" + Math.random().toString(36).slice(2, 8);
     el.innerHTML = html`
       <div class="cs-header">[compaction]</div>
-      <div class="cs-preview" id="${summaryId}-toggle">Compacted from ${tokenStr} tokens (click to expand)</div>
+      <div class="cs-preview" id="${summaryId}-toggle">${t("compaction.compacted")} ${tokenStr} ${t("compaction.tokens")} ${t("compaction.expand")}</div>
       <div class="cs-content" id="${summaryId}-content" style="display:none">${data.summary || ""}</div>`;
     state.chatContainer.appendChild(el);
 
@@ -1517,7 +1526,7 @@ export function handleCompactionSummaryMessage(data: any) {
       toggle.addEventListener("click", function () {
       var visible = contentEl2 && contentEl2.style.display !== "none";
       if (contentEl2) { contentEl2.style.display = visible ? "none" : "block"; }
-      if (toggle) { toggle.textContent = visible ? "Compacted from " + tokenStr + " tokens (click to expand)" : "Compacted from " + tokenStr + " tokens"; }
+      if (toggle) { toggle.textContent = visible ? t("compaction.compacted") + " " + tokenStr + " " + t("compaction.tokens") + " " + t("compaction.expand") : t("compaction.compacted") + " " + tokenStr + " " + t("compaction.tokens"); }
       });
     }
     scrollToBottom();
@@ -1601,21 +1610,21 @@ export function renderScopedModels() {
 
 export function renderSettingsPanel() {
     if (!state.settingsOverlay || !state.settingsOpen) {return;}
-    var result = '<div class="settings-title">Settings</div>';
+    var result = '<div class="settings-title">' + t("settings.title") + '</div>';
 
     var toggles = [
-      { key: "autoCompaction", label: "Auto-compaction" },
-      { key: "autoRetry", label: "Auto-retry" },
-      { key: "showImages", label: "Show images" },
+      { key: "autoCompaction", label: t("settings.autoCompaction") },
+      { key: "autoRetry", label: t("settings.autoRetry") },
+      { key: "showImages", label: t("settings.showImages") },
     ];
 
     for (var i = 0; i < toggles.length; i++) {
-      var t = toggles[i];
-      var on = (state.settingsState as Record<string, boolean>)[t.key];
+      var toggle = toggles[i];
+      var on = (state.settingsState as Record<string, boolean>)[toggle.key];
       result += html`
         <div class="settings-row">
-          <span>${t.label}</span>
-          <span class="settings-toggle${on ? " on" : ""}" data-key="${t.key}"></span>
+          <span>${toggle.label}</span>
+          <span class="settings-toggle${on ? " on" : ""}" data-key="${toggle.key}"></span>
         </div>`;
     }
 

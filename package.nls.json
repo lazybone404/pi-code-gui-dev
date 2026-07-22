@@ -84,5 +84,12 @@
   "auth.selectMethod": "Select authentication method:",
   "auth.selectOAuthProvider": "Select subscription provider:",
   "auth.selectApiKeyProvider": "Select API key provider:",
-  "auth.selectProviderLogout": "Select provider to logout:"
+  "auth.selectProviderLogout": "Select provider to logout:",
+  "settings.autoCompaction": "Auto-compaction",
+  "settings.autoRetry": "Auto-retry",
+  "settings.showImages": "Show images",
+  "settings.title": "Settings",
+  "compaction.compacted": "Compacted from",
+  "compaction.expand": "(click to expand)",
+  "compaction.tokens": "tokens"
 }
