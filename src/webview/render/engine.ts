@@ -180,9 +180,6 @@ export function hideWelcome() {
     state.welcome.remove();
     state.welcome = null;
   }
-  // Show the top navigation bar
-  var topbar = document.getElementById("topbar");
-  if (topbar) { topbar.classList.add("visible"); }
 }
 
 export function resetChat() {
