@@ -16,6 +16,8 @@ export interface SessionSummary {
   messageCount: number;
   created?: number;
   modified?: number;
+  model?: string;
+  tokenCount?: number;
 }
 
 /** A single entry in a session (message, compaction, model change, etc.). */

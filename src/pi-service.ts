@@ -3,6 +3,7 @@ import * as fs from "node:fs";
 import * as vscode from "vscode";
 import { createBridgeTools } from "./bridge-tools.js";
 import { type PiServiceEvent, validateExtensionToWebview } from "./types.js";
+import type { SessionSummary } from "./types.js";
 import { piLog, piWarn } from "./logger.js";
 import { AuthService } from "./services/auth.js";
 import { ModelService } from "./services/model.js";
@@ -165,8 +166,7 @@ export class PiService {
   }
 
   /** List past (saved-on-disk) sessions for the given cwd. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-  static async listSessions(cwd: string): Promise<any[]> {
+  static async listSessions(cwd: string): Promise<SessionSummary[]> {
     try {
       const piRoot = resolvePiPackagePath();
       // Match initialize()'s retry parameters — fewer retries here
@@ -174,7 +174,31 @@ export class PiService {
       const SDK = await importWithRetry(path.join(piRoot, "dist/index.js"), 5, 500);
       const cfg = vscode.workspace.getConfiguration("pi-code-gui");
       const sessionDir = cfg.get<string>("sessionDir")?.trim() || undefined;
-      const sessions = await SDK.SessionManager.list(cwd, sessionDir);
+      const sessions: SessionSummary[] = await SDK.SessionManager.list(cwd, sessionDir);
+      // Enrich with model info from session entries (lightweight: reads only entries)
+      for (const s of sessions) {
+        try {
+          const sm = SDK.SessionManager.open(s.path);
+          const entries = sm.getEntries?.() ?? [];
+          // Find last model_change entry
+          for (let i = entries.length - 1; i >= 0; i--) {
+            const e = entries[i] as Record<string, unknown>;
+            if (e.type === "model_change" && e.modelId) {
+              s.model = String(e.modelId);
+              break;
+            }
+          }
+          // Count token usage
+          let tokens = 0;
+          for (const e of entries) {
+            const entry = e as Record<string, unknown>;
+            if (entry.usage && typeof (entry.usage as Record<string, unknown>).totalTokens === "number") {
+              tokens += (entry.usage as Record<string, unknown>).totalTokens as number;
+            }
+          }
+          if (tokens > 0) { s.tokenCount = tokens; }
+        } catch { /* skip session read errors */ }
+      }
       piLog(`listSessions: found ${sessions.length} past sessions in ${cwd}`);
       return sessions;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

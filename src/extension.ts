@@ -1737,7 +1737,12 @@ class MultiSessionTreeProvider implements vscode.TreeDataProvider<SessionTreeIte
       ? formatRelativeTime(new Date(s.modified))
       : "";
     const msgCount = s.messageCount ?? 0;
-    const desc = `${msgCount} msg${msgCount === 1 ? "" : "s"}${dateStr ? " · " + dateStr : ""}`;
+    const descParts: string[] = [];
+    descParts.push(`${msgCount} msg${msgCount === 1 ? "" : "s"}`);
+    if (s.model) { descParts.push(s.model); }
+    if (s.tokenCount > 0) { descParts.push(formatTokens(s.tokenCount)); }
+    if (dateStr) { descParts.push(dateStr); }
+    const desc = descParts.join(" · ");
 
     const item = new SessionTreeItem(
       label,
@@ -1751,7 +1756,13 @@ class MultiSessionTreeProvider implements vscode.TreeDataProvider<SessionTreeIte
     item.description = desc;
     item.iconPath = new vscode.ThemeIcon("archive");
     item.tooltip = new vscode.MarkdownString(
-      `**${s.name || "Session"}**\n\nPath: \`${s.path}\`\nMessages: ${msgCount}\nCreated: ${s.created ? new Date(s.created).toLocaleString() : "-"}\nModified: ${s.modified ? new Date(s.modified).toLocaleString() : "-"}`,
+      `**${s.name || "Session"}**\n\n` +
+      `Path: \`${s.path}\`\n` +
+      (s.model ? `Model: ${s.model}\n` : "") +
+      `Messages: ${msgCount}\n` +
+      (s.tokenCount ? `Tokens: ${formatTokens(s.tokenCount)}\n` : "") +
+      `Created: ${s.created ? new Date(s.created).toLocaleString() : "-"}\n` +
+      `Modified: ${s.modified ? new Date(s.modified).toLocaleString() : "-"}`,
     );
     item.contextValue = "pastSessionEntry";
     return item;
