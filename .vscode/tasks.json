@@ -11,8 +11,10 @@
                 "npm: watch:webview"
             ],
             "presentation": {
-                "reveal": "never"
+                "reveal": "always",
+                "panel": "dedicated"
             },
+            "isBackground": true,
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -22,7 +24,6 @@
             "type": "npm",
             "script": "watch:esbuild",
             "group": "build",
-            "problemMatcher": "$esbuild-watch",
             "isBackground": true,
             "label": "npm: watch:esbuild",
             "presentation": {
@@ -34,7 +35,6 @@
             "type": "npm",
             "script": "watch:webview",
             "group": "build",
-            "problemMatcher": "$esbuild-watch",
             "isBackground": true,
             "label": "npm: watch:webview",
             "presentation": {

@@ -6,8 +6,7 @@
       "type": "extensionHost",
       "request": "launch",
       "args": [
-        "--extensionDevelopmentPath=${workspaceFolder}",
-        "--disable-extensions"
+        "--extensionDevelopmentPath=${workspaceFolder}"
       ],
       "outFiles": [
         "${workspaceFolder}/dist/extension.js"
@@ -17,7 +16,6 @@
         "${workspaceFolder}/dist/**",
         "!**/node_modules/**"
       ],
-      "preLaunchTask": "watch",
       "env": {
         "NODE_OPTIONS": "--enable-source-maps"
       }

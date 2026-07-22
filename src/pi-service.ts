@@ -17,15 +17,24 @@ function reverseFind<T>(arr: T[], pred: (el: T) => boolean): T | undefined {
  * Dynamic import with retry — handles the race where npm is still populating
  * node_modules when the extension host first activates.
  */
+/** Convert a Windows absolute path to a file:// URL for ESM import. */
+function toFileUrl(path: string): string {
+  if (process.platform === "win32" && path.length > 1 && path[1] === ":") {
+    return "file:///" + path.replace(/\\/g, "/");
+  }
+  return path;
+}
+
 async function importWithRetry(
   modulePath: string,
   maxAttempts: number,
   delayMs: number,
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any> {
+  const importUrl = toFileUrl(modulePath);
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      return await import(modulePath);
+      return await import(importUrl);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
       if (attempt === maxAttempts) { throw e; }
@@ -42,7 +51,7 @@ interface PiSdk {
   createAgentSession: Function;
   SessionManager: any;
   SettingsManager: any;
-  AuthStorage: any;
+  ModelRuntime: any;
   ModelRegistry: any;
   createCodingTools: Function;
   createReadOnlyTools: Function;
@@ -306,6 +315,7 @@ export class PiService {
   /* eslint-disable @typescript-eslint/no-explicit-any -- SDK objects are dynamically typed */
   private SDK: PiSdk | null = null;
   private AI: PiAi | null = null;
+  private modelRuntime: any = null;
   private authStorage: any = null;
   private modelRegistry: any = null;
   private settingsManager: any = null;
@@ -454,6 +464,64 @@ export class PiService {
     await fs.promises.unlink(filePath);
   }
 
+  /**
+   * Create a compatibility shim that wraps ModelRuntime to match
+   * the old AuthStorage API used throughout this class.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private createAuthStorageShim(modelRuntime: any): any {
+    return {
+      setRuntimeApiKey: (provider: string, key: string) =>
+        modelRuntime.setRuntimeApiKey(provider, key),
+
+      getApiKey: async (provider: string) => {
+        try {
+          const auth = await modelRuntime.getAuth(provider);
+          return auth?.auth?.apiKey;
+        } catch {
+          return undefined;
+        }
+      },
+
+      getOAuthProviders: () => {
+        // ModelRuntime doesn't expose OAuth-only providers directly;
+        // filter registered providers that use OAuth.
+        const providers = modelRuntime.getRegisteredProviderIds();
+        return providers
+          .filter((id: string) => modelRuntime.isUsingOAuth(id))
+          .map((id: string) => ({ id, name: modelRuntime.getProvider?.(id)?.name ?? id }));
+      },
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      login: (providerId: string, options: any) =>
+        modelRuntime.login(providerId, options),
+
+      logout: (providerId: string) =>
+        modelRuntime.logout(providerId),
+
+      list: async () => {
+        const creds = await modelRuntime.listCredentials();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return creds.map((c: any) => c.providerId);
+      },
+
+      get: async (providerId: string) => {
+        const auth = await modelRuntime.getAuth(providerId);
+        if (!auth) { return undefined; }
+        return {
+          type: auth.source === "oauth" ? "oauth" : "api_key",
+          ...auth.auth,
+        };
+      },
+
+      set: async (providerId: string, credential: { type: string; key?: string }) => {
+        if (credential.type === "api_key" && credential.key) {
+          await modelRuntime.setRuntimeApiKey(providerId, credential.key);
+        }
+      },
+    };
+  }
+
   async initialize(opts?: { fresh?: boolean; openPath?: string }): Promise<{ success: boolean; error?: string }> {
     const fresh = opts?.fresh ?? false;
     const openPath = opts?.openPath ?? null;
@@ -518,20 +586,23 @@ export class PiService {
 
     // ── Step 3: Auth & model registry ──────────────────
     try {
-      this.authStorage = SDK.AuthStorage.create();
+      this.modelRuntime = await SDK.ModelRuntime.create();
 
-      // Runtime API key override from VS Code secrets or env
+      // Runtime API key override from VS Code settings
       const config = vscode.workspace.getConfiguration("pi-code-gui");
       const anthropicKey = config.get<string>("anthropicApiKey");
       if (anthropicKey) {
-        this.authStorage.setRuntimeApiKey("anthropic", anthropicKey);
+        await this.modelRuntime.setRuntimeApiKey("anthropic", anthropicKey);
       }
       const openaiKey = config.get<string>("openaiApiKey");
       if (openaiKey) {
-        this.authStorage.setRuntimeApiKey("openai", openaiKey);
+        await this.modelRuntime.setRuntimeApiKey("openai", openaiKey);
       }
 
-      this.modelRegistry = SDK.ModelRegistry.create(this.authStorage);
+      // Compatibility shim: wrap modelRuntime to match old AuthStorage interface
+      this.authStorage = this.createAuthStorageShim(this.modelRuntime);
+
+      this.modelRegistry = new SDK.ModelRegistry(this.modelRuntime);
       this.settingsManager = SDK.SettingsManager.create(cwd);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
@@ -733,8 +804,7 @@ export class PiService {
       const opts: any = {
         model: resumeModel,
         thinkingLevel: resumeThinkingLevel,
-        authStorage: this.authStorage,
-        modelRegistry: this.modelRegistry,
+        modelRuntime: this.modelRuntime,
         settingsManager: this.settingsManager,
         sessionManager: this.sessionManager,
         customTools: tools,

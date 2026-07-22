@@ -123,17 +123,25 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // After extension host restart, workspace folders may not be available yet.
   // Without this guard, we fall back to process.cwd() which on remote servers
   // is the server root, loading sessions from the wrong project.
+  // Timeout: if no workspace folder appears within 5s, fall back to process.cwd().
   if (!vscode.workspace.workspaceFolders?.length) {
-    piLog("Waiting for workspace folders...");
-    await new Promise<void>((resolve) => {
-      const sub = vscode.workspace.onDidChangeWorkspaceFolders(() => {
-        if (vscode.workspace.workspaceFolders?.length) {
-          sub.dispose();
-          resolve();
-        }
-      });
-    });
-    piLog(`Workspace ready: ${vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? ""}`);
+    piLog("Waiting for workspace folders (timeout: 5s)...");
+    await Promise.race([
+      new Promise<void>((resolve) => {
+        const sub = vscode.workspace.onDidChangeWorkspaceFolders(() => {
+          if (vscode.workspace.workspaceFolders?.length) {
+            sub.dispose();
+            resolve();
+          }
+        });
+      }),
+      new Promise<void>((resolve) => setTimeout(resolve, 5000)),
+    ]);
+    if (vscode.workspace.workspaceFolders?.length) {
+      piLog(`Workspace ready: ${vscode.workspace.workspaceFolders[0]?.uri.fsPath ?? ""}`);
+    } else {
+      piLog("No workspace folder detected after 5s, continuing with process.cwd()");
+    }
   }
 
   // Catch unhandled rejections/exceptions so we can see what crashes the
