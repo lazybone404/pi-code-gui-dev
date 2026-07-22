@@ -440,6 +440,7 @@ export class PiWebviewPanel {
   get summary(): string | null { return this._tabSummary; }
 
   postMessage(message: ExtensionToWebview | WebviewToExtension): void {
+    if (!this.panel) { return; }
     // ── Layer 1: Validate extension→webview messages before posting ──
     // Webview-to-extension messages are validated on receipt by the extension host.
     // For extension→webview, we validate here to catch malformed events early.
@@ -457,12 +458,18 @@ export class PiWebviewPanel {
         console.error(`[pi-gui] postMessage validation failed for type "${msgType}": ${result.error}`);
       }
     }
-    this.panel?.webview.postMessage(message);
+    try {
+      this.panel.webview.postMessage(message);
+    } catch {
+      // Channel closed (webview disposed) — silently ignore
+    }
   }
 
   /** Insert a command or file reference into the chat input */
   postCommand(command: string): void {
-    this.panel?.webview.postMessage({ type: "insertCommand", command });
+    try {
+      this.panel?.webview.postMessage({ type: "insertCommand", command });
+    } catch { /* channel closed */ }
   }
 
   /** Handle a locally-intercepted slash command (not sent to LLM) */
