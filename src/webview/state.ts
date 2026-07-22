@@ -12,6 +12,7 @@ export interface AppState {
   isCompacting: boolean;
   isRetrying: boolean;
   _inBatch: boolean;
+  _hasMessages: boolean;
 
   // ── DOM element references (current streaming state)
   currentAssistantEl: HTMLElement | null;
@@ -120,6 +121,7 @@ export const state: AppState = {
   isCompacting: false,
   isRetrying: false,
   _inBatch: false,
+  _hasMessages: false,
 
   currentAssistantEl: null,
   currentThinkingEl: null,

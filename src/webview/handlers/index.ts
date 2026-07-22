@@ -209,6 +209,8 @@ export function createLiveCard(key: string, customType: string, label: string, c
   // ═══ Agent Lifecycle ═══════════════════════════════════
 
 export function handleAgentStart() {
+    state._hasMessages = true;
+    hideWelcome();
     logEvent("agent-start", { bashBlocksN: Object.keys(state.bashBlocks).length, toolBlocksN: Object.keys(state.currentToolBlocks).length });
     state.isStreaming = true;
     state.queueMode = "steer";  // reset to default on new stream
@@ -328,6 +330,7 @@ export function handleTurnEnd(data: any) {
   // ═══ Message Lifecycle ═════════════════════════════════
 
 export function handleChatMessage(data: any) {
+    state._hasMessages = true;
     // Dedup: skip if same role+content as last user message
     if (data.role === "user" && data.content === state.lastUserMessageContent) {return;}
     if (data.role === "user") {
@@ -691,6 +694,7 @@ export function handleStatus(data: any) {
 
 export function handleBatchStart(data: any) {
     state._inBatch = true;
+    state._hasMessages = true; // permanently dismiss welcome
     // If restoring history, hide state.welcome immediately — no flash
     if (data.hasEntries) { hideWelcome(); }
     document.body.classList.add("no-animate");
@@ -2358,6 +2362,8 @@ export function handleSetLocale(data: Record<string, unknown>): void {
 }
 
 export function handleAuthStatus(data: Record<string, unknown>): void {
+  // Never show welcome if chat already has content (session history restored)
+  if (state._hasMessages) { return; }
   if (data && data.loggedIn === true) {
     hideWelcome();
   } else {
