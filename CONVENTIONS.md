@@ -253,7 +253,41 @@ Simple is better than clever.
 
 ---
 
-## 8. General
+## 8. Pi Design Philosophy
+
+Pi's design philosophy is: **minimal core, fully extensible, don't make decisions for the user.**
+Every feature we build must align with these principles.
+
+### What Pi Does NOT Do (and We Won't Either)
+
+| Pi doesn't | Because | Our extension must not |
+|------|------|------|
+| MCP | Use CLI tools + Skills | Invent a new protocol between VS Code and agent |
+| Sub-agents | Many ways exist; use tmux or extensions | Create hidden multi-agent orchestration |
+| Permission popups | Run in containers or build your own | Add blocking confirmation dialogs |
+| Plan mode | Write plans to files | Add a proprietary planning workflow |
+| Built-in to-dos | TODO.md is reliable | Add a proprietary task tracker |
+| Background bash | tmux for full observability | Run bash without showing output |
+
+### What Pi Does (and We Must Respect)
+
+- **Sessions are files** — JSONL under `~/.pi/agent/sessions/`, tree-structured, human-readable
+- **Extensions, not forks** — Customize through TypeScript extensions, skills, templates, themes
+- **CLI-first** — `pi` commands are the canonical interface; GUI supplements, not replaces
+- **Standard session format** — Every entry has `id`, `parentId`, `type`, `timestamp`; we must never break this
+- **User owns their data** — No hidden databases, no proprietary serialization
+
+### Our Design Rules (Derived from Pi)
+
+1. **Sessions live in standard JSONL files** — never create a separate session database
+2. **GUI supplements CLI** — every feature should have an equivalent CLI command path
+3. **Don't force organization** — suggest, don't mandate project grouping or tagging
+4. **Keep it file-compatible** — terminal pi must be able to open our session files without errors
+5. **Extensions over core changes** — new features go in extension code, not SDK monkey-patching
+
+---
+
+## 9. General
 
 - **Files**: use LF line endings, UTF-8 encoding
 - **Comments**: English or Chinese, whichever is clearer. Technical terms stay in English.
