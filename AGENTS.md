@@ -47,7 +47,10 @@
 - [ ] 发布 .vsix → VS Code 市场 / Open VSX
 - [ ] GitHub Actions CI
 
-## 关键文件
+## 文件索引
+
+新对话时 agent 按顺序读：
+1. `AGENTS.md` → `CONVENTIONS.md` → `DEVELOPMENT.md` → `SESSION_NOTES.md`
 
 | 文件 | 说明 |
 |------|------|
