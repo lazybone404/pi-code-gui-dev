@@ -176,9 +176,11 @@ export function createToolBlock(toolName: string, toolCallId: string, status: st
 
 export function hideWelcome() {
   if (state._inBatch) {return;}
+  if (!state.welcome) {
+    state.welcome = document.getElementById("welcome");
+  }
   if (state.welcome) {
-    state.welcome.remove();
-    state.welcome = null;
+    state.welcome.style.display = "none";
   }
 }
 

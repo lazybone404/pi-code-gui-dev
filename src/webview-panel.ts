@@ -173,7 +173,9 @@ export class PiWebviewPanel {
             break;
 
           case "loginTrigger":
-            void vscode.commands.executeCommand("pi-code-gui.login");
+            await vscode.commands.executeCommand("pi-code-gui.login");
+            // Re-check auth after login — dismiss welcome if now authenticated
+            await this._sendAuthStatus();
             break;
 
           case "searchSessions":
