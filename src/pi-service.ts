@@ -8,141 +8,20 @@ import { AuthService } from "./services/auth.js";
 import { ModelService } from "./services/model.js";
 import { buildSystemPrompt, buildContextFiles, buildPromptTemplates } from "./services/prompts.js";
 
-/** Find the last element matching predicate (ES2023 findLast polyfill). */
-function reverseFind<T>(arr: T[], pred: (el: T) => boolean): T | undefined {
-  for (let i = arr.length - 1; i >= 0; i--) {
-    if (pred(arr[i])) { return arr[i]; }
-  }
-  return undefined;
-}
+import {
+  type PiSdk,
+  type PiAi,
+  type InstallStatus,
+  reverseFind,
+  importWithRetry,
+  resolvePiPackagePath,
+} from "./services/sdk.js";
 
-/**
- * Dynamic import with retry — handles the race where npm is still populating
- * node_modules when the extension host first activates.
- */
-/** Convert a Windows absolute path to a file:// URL for ESM import. */
-function toFileUrl(path: string): string {
-  if (process.platform === "win32" && path.length > 1 && path[1] === ":") {
-    return "file:///" + path.replace(/\\/g, "/");
-  }
-  return path;
-}
+// Re-export for other modules that depend on this
+const PiEventListener: unique symbol = Symbol('PiEventListener');
+type PiEventListener = (event: PiServiceEvent) => void;
 
-async function importWithRetry(
-  modulePath: string,
-  maxAttempts: number,
-  delayMs: number,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-): Promise<any> {
-  const importUrl = toFileUrl(modulePath);
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      return await import(importUrl);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (e: any) {
-      if (attempt === maxAttempts) { throw e; }
-      piWarn(`importWithRetry: attempt ${attempt}/${maxAttempts} failed for ${modulePath}: ${e.message}`);
-      await new Promise((r) => setTimeout(r, delayMs));
-    }
-  }
-}
-
-// ── Types for the dynamically loaded SDK ──────────────────
-
-/* eslint-disable @typescript-eslint/no-explicit-any -- dynamically imported SDK; types unavailable at compile time */
-interface PiSdk {
-  createAgentSession: Function;
-  SessionManager: any;
-  SettingsManager: any;
-  ModelRuntime: any;
-  ModelRegistry: any;
-  createCodingTools: Function;
-  createReadOnlyTools: Function;
-  DefaultResourceLoader: any;
-  defineTool: Function;
-  getAgentDir: Function;
-  createSyntheticSourceInfo: Function;
-}
-
-interface PiAi {
-  getModel: Function;
-  getProviders: Function;
-  complete: Function;
-}
-
-export interface InstallStatus {
-  installed: boolean;
-  hasApiKey: boolean;
-  path?: string;
-  error?: string;
-}
-
-/* eslint-enable @typescript-eslint/no-explicit-any */
-type EventListener = (event: PiServiceEvent) => void;
-
-// ── SDK Resolution ───────────────────────────────────────
-
-export function resolvePiPackagePath(): string {
-  const pkgSuffix = path.join("node_modules", "@earendil-works", "pi-coding-agent");
-  const candidates: Set<string> = new Set();
-
-  // 1. Project-local install
-  candidates.add(path.resolve(path.join(".pi", "npm", pkgSuffix)));
-
-  // 2. Universal PATH scan — derive npm global prefixes from $PATH entries
-  const pathEnv = process.env.PATH || "";
-  const separator = process.platform === "win32" ? ";" : ":";
-  const seenPrefixes = new Set<string>();
-  for (const binDir of pathEnv.split(separator)) {
-    if (!binDir) { continue; }
-    let normBin = path.normalize(binDir);
-    if (normBin.endsWith(path.sep)) { normBin = normBin.slice(0, -1); }
-    const prefix = path.dirname(normBin);
-    if (seenPrefixes.has(normBin)) { continue; }
-    seenPrefixes.add(normBin);
-    candidates.add(path.join(prefix, "lib", pkgSuffix));
-    if (process.platform === "win32") {
-      candidates.add(path.join(prefix, pkgSuffix));
-    }
-  }
-
-
-  // 3. Windows AppData (npm default on Windows)
-  const appData = process.env.APPDATA || "";
-  if (appData) {
-    candidates.add(path.join(appData, "npm", pkgSuffix));
-  }
-
-
-  // 4. Legacy hardcoded fallbacks (for GUI-launched VS Code with incomplete $PATH)
-  const home = process.env.HOME || process.env.USERPROFILE || "";
-  if (home) {
-    candidates.add(path.join(home, ".npm-global", "lib", pkgSuffix));
-    candidates.add(path.join(home, ".local", "lib", pkgSuffix));
-  }
-  if (process.env.NVM_DIR) {
-    try {
-      const versionsDir = path.join(process.env.NVM_DIR, "versions", "node");
-      if (fs.existsSync(versionsDir)) {
-        for (const version of fs.readdirSync(versionsDir)) {
-          candidates.add(path.join(versionsDir, version, "lib", pkgSuffix));
-        }
-      }
-    } catch (e: unknown) { piWarn(`Non-critical failure (ignored): ${e instanceof Error ? e.message : String(e)}`); }
-  }
-
-  for (const candidate of candidates) {
-    try {
-      const pkgPath = path.join(candidate, "package.json");
-      if (fs.existsSync(pkgPath)) { return candidate; }
-    } catch (e: unknown) { piWarn(`Non-critical failure (ignored): ${e instanceof Error ? e.message : String(e)}`); }
-  }
-
-  throw new Error(
-    "Pi coding agent SDK not found. Please install it:\n" +
-      "  npm install -g @earendil-works/pi-coding-agent",
-  );
-}
+export { resolvePiPackagePath };
 
 // ── PiService ────────────────────────────────────────────
 
@@ -150,7 +29,7 @@ export class PiService {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private session: any = null;
   private unsubscribe: (() => void) | null = null;
-  private listeners: EventListener[] = [];
+  private listeners: PiEventListener[] = [];
   private _model: { id?: string; name?: string; provider?: string } | null = null;
   private _thinkingLevel = "off";
   private _effort = "auto";
@@ -202,7 +81,7 @@ export class PiService {
 
   // ── Public API ─────────────────────────────────────────
 
-  onEvent(listener: EventListener): () => void {
+  onEvent(listener: PiEventListener): () => void {
     this.listeners.push(listener);
     return () => {
       this.listeners = this.listeners.filter((l) => l !== listener);

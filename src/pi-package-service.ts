@@ -1,6 +1,6 @@
 import * as path from "node:path";
 import * as vscode from "vscode";
-import { resolvePiPackagePath } from "./pi-service.js";
+import { resolvePiPackagePath } from "./services/sdk.js";
 
 /**
  * Wraps the Pi SDK's DefaultPackageManager for use in the VS Code extension.
