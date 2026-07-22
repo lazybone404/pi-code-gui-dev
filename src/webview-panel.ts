@@ -449,16 +449,7 @@ export class PiWebviewPanel {
 </head>
 <body>
   <div id="chat-container">
-    <div id="welcome" class="welcome-message">
-      <div class="welcome-icon">π</div>
-      <h2>Pi Code Gui</h2>
-      <p class="welcome-subtitle">AI coding assistant in VS Code</p>
-      <div class="welcome-hints">
-        <button id="welcome-login-btn" class="welcome-btn">Set Up API Key / Login</button>
-        <p class="welcome-or">or set <code>DEEPSEEK_API_KEY</code> in environment variables</p>
-      </div>
-    </div>
-    <!-- Top navigation bar: session name + history button -->
+    <!-- Top navigation bar: always visible -->
     <div id="topbar" class="topbar">
       <span id="topbar-title" class="topbar-title">Pi Code Gui</span>
       <div class="topbar-actions">
@@ -467,6 +458,7 @@ export class PiWebviewPanel {
         </button>
       </div>
     </div>
+    <div id="welcome" class="welcome-message" style="display:none">
   </div>
 
   <div id="live-panel"></div>

@@ -182,6 +182,16 @@ export function hideWelcome() {
   }
 }
 
+export function showWelcome() {
+  if (state._inBatch) {return;}
+  if (!state.welcome) {
+    state.welcome = document.getElementById("welcome");
+  }
+  if (state.welcome) {
+    state.welcome.style.display = "";
+  }
+}
+
 export function resetChat() {
   logEvent("resetChat", {
     bashBlocksN: Object.keys(state.bashBlocks).length,

@@ -7,7 +7,7 @@ import {
   truncate, formatTokens, renderToolResult, renderFileContent,
   renderDiffMarkup, formatToolError, getLangFromPath,
   getCompactReadLabel, registerToolRenderer, getToolRenderer,
-  hideWelcome, resetChat, scrollToBottom, updateStreamingState,
+  hideWelcome, showWelcome, resetChat, scrollToBottom, updateStreamingState,
   renderToolResultTruncated, renderBlockToHTML,
   shortenPath, renderCodeBlockHTML,
   setupCodeBlockHandlers,
@@ -2290,6 +2290,8 @@ export function handleSetLocale(data: Record<string, unknown>): void {
 export function handleAuthStatus(data: Record<string, unknown>): void {
   if (data && data.loggedIn === true) {
     hideWelcome();
+  } else {
+    showWelcome();
   }
 }
 
