@@ -17,11 +17,15 @@
 
 ## 开发原则
 
+详见 [CONVENTIONS.md](./CONVENTIONS.md)
+
 - 代码注释和 Commit 用英文
-- ESLint 沿用原项目规则（严格模式）
+- ESLint 沿用原项目规则（严格模式），详见 CONVENTIONS.md §3
 - 改动加测试
 - 国际化做正经 i18n
-- Commit 规范：Conventional Commits
+- Commit 规范：Conventional Commits（详见 CONVENTIONS.md §1）
+- TypeScript 命名和类型规范（详见 CONVENTIONS.md §2）
+- 模块拆分目标（详见 CONVENTIONS.md §4）
 - 主要给自己用，可以破坏性改动
 
 ## 分支说明
