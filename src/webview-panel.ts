@@ -450,17 +450,21 @@ export class PiWebviewPanel {
   <link rel="stylesheet" href="${styleUri}">
 </head>
 <body>
-  <!-- Fixed top bar: session name + actions -->
-  <div id="topbar" class="topbar">
-    <span id="topbar-title" class="topbar-title">Pi Code Gui</span>
-    <div class="topbar-actions">
-      <button id="topbar-history-btn" class="topbar-btn" title="Search & switch sessions">
-        📋
+  <!-- Navigation bar: session identity + model config -->
+  <div id="nav-bar" class="nav-bar">
+    <div class="nav-left">
+      <span id="nav-session" class="nav-session">Pi Code Gui</span>
+      <button id="nav-history" class="nav-icon-btn" title="Switch session">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
       </button>
+    </div>
+    <div class="nav-right">
+      <button id="nav-model" class="nav-pill" title="Change model"></button>
+      <button id="nav-thinking" class="nav-pill" title="Change thinking level"></button>
     </div>
   </div>
 
-  <!-- Scrollable chat area -->
+  <!-- Messages (scrollable) -->
   <div id="chat-container">
     <div id="welcome" class="welcome-message" style="display:none">
       <div class="welcome-icon">π</div>
@@ -474,8 +478,8 @@ export class PiWebviewPanel {
     <div id="live-panel"></div>
   </div>
 
+  <!-- Input -->
   <div id="attachment-bar"></div>
-
   <div id="input-area">
     <textarea id="prompt-input" placeholder="Ask Pi to help you code..." rows="1" disabled></textarea>
     <div id="steer-split">
@@ -485,15 +489,14 @@ export class PiWebviewPanel {
     <button id="abort-button" class="hidden">■ Stop</button>
   </div>
 
+  <!-- Status bar: metrics only -->
   <div id="pi-status-bar">
-    <span id="pi-sb-dot" style="flex-shrink:0; font-weight:700;">○</span>
-    <div class="pi-sb-item" id="pi-sb-model" title="Click to change model">π Pi</div>
-    <div class="pi-sb-item" id="pi-sb-thinking" title="Click to change thinking level">thinking: off</div>
-    <div class="pi-sb-item" id="pi-sb-effort" title="Click to change effort">effort: auto</div>
+    <span id="pi-sb-dot"></span>
     <div id="pi-extension-status" class="pi-sb-item"></div>
     <div class="pi-sb-item spacer"></div>
-    <div class="pi-sb-item" id="pi-sb-usage" title="Click to set context budget">0%</div>
+    <div class="pi-sb-item" id="pi-sb-usage" title="Click to set context budget"></div>
     <div class="pi-sb-item" id="pi-sb-settings" title="Settings">⚙</div>
+  </div>
   </div>
 
   <div class="user-msg-selector-overlay" id="user-msg-overlay"></div>

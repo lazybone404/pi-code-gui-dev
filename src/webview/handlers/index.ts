@@ -615,13 +615,17 @@ export function handleThinkingDelta(data: any) {
 
   // ═══ Session Events ════════════════════════════════════
 
-  // ═══ In-webview status bar ═══════════════════════════
+  // ═══ In-webview status bar & nav bar ══════════════
 
-let sbDot = document.getElementById("pi-sb-dot");
-let sbModel = document.getElementById("pi-sb-model");
-let sbThinking = document.getElementById("pi-sb-thinking");
-let sbEffort = document.getElementById("pi-sb-effort");
-let sbUsage = document.getElementById("pi-sb-usage");
+// Nav bar elements (replaces old sbModel/sbThinking which are now in nav)
+var navSession = document.getElementById("nav-session");
+var navModel = document.getElementById("nav-model");
+var navThinking = document.getElementById("nav-thinking");
+
+// Status bar elements (metrics only)
+var sbDot = document.getElementById("pi-sb-dot");
+var sbEffort = document.getElementById("pi-sb-effort");
+var sbUsage = document.getElementById("pi-sb-usage");
 
 export function setSbDot(state: string) {
     if (!sbDot) {return;}
@@ -641,11 +645,11 @@ export function sbModelText(modelId: string) {
 export function handleStatusUpdate(data: any) {
     if (data.reset) {return;}
 
-    if (sbModel && data.model) {
-      sbModel.textContent = sbModelText(data.model);
+    if (navModel && data.model) {
+      navModel.textContent = sbModelText(data.model);
     }
-    if (sbThinking) {
-      sbThinking.textContent = t("footer.thinking") + ": " + (data.thinkingLevel || "off");
+    if (navThinking) {
+      navThinking.textContent = (data.thinkingLevel || "off");
     }
     if (sbEffort) {
       sbEffort.textContent = t("footer.effort") + ": " + (data.effort || "auto");
@@ -668,11 +672,11 @@ export function handleStatus(data: any) {
       state.sendButton.disabled = false;
       state.promptInput.placeholder = "Ask pi to do something...";
       state.promptInput.focus();
-      if (sbModel && data.model) {
-        sbModel.textContent = sbModelText(data.model);
+      if (navModel && data.model) {
+        navModel.textContent = sbModelText(data.model);
       }
-      if (sbThinking) {
-        sbThinking.textContent = t("footer.thinking") + ": " + (data.thinkingLevel || "off");
+      if (navThinking) {
+        navThinking.textContent = (data.thinkingLevel || "off");
       }
       if (sbEffort) {
         sbEffort.textContent = t("footer.effort") + ": " + (data.effort || "auto");
@@ -821,8 +825,8 @@ export function handleAutoRetryEnd(data: any) {
   }
 
 export function handleThinkingLevelChanged(data: any) {
-    if (sbThinking && data.level) {
-      sbThinking.textContent = t("footer.thinking") + ": " + data.level;
+    if (navThinking && data.level) {
+      navThinking.textContent = data.level;
     }
   }
 
@@ -1324,14 +1328,14 @@ export function sendPrompt(): void {
     }
   });
 
-  // ── In-webview status bar click handlers ─────────────
-  if (sbModel) {
-    sbModel.addEventListener("click", function () {
+  // ── Navigation bar click handlers ───────────────
+  if (navModel) {
+    navModel.addEventListener("click", function () {
       window.__vscode.postMessage({ type: "pickModel" });
     });
   }
-  if (sbThinking) {
-    sbThinking.addEventListener("click", function () {
+  if (navThinking) {
+    navThinking.addEventListener("click", function () {
       window.__vscode.postMessage({ type: "pickThinkingLevel" });
     });
   }
@@ -2297,7 +2301,7 @@ export function handleAuthStatus(data: Record<string, unknown>): void {
 
 export function handleSessionName(data: Record<string, unknown>): void {
   if (data && typeof data.name === "string") {
-    var title = document.getElementById("topbar-title");
+    var title = document.getElementById("nav-session");
     if (title) { title.textContent = data.name; }
   }
 }

@@ -72,9 +72,9 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
-// ── Topbar history button ─────────────────────────
+// ── Nav bar history button ────────────────────────
 document.addEventListener("DOMContentLoaded", function () {
-  var historyBtn = document.getElementById("topbar-history-btn");
+  var historyBtn = document.getElementById("nav-history");
   if (historyBtn) {
     historyBtn.addEventListener("click", function () {
       if (window.__vscode) {
