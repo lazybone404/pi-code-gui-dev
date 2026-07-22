@@ -1104,3 +1104,111 @@ body {
   cursor: pointer; font-size: var(--pi-font-xs); font-family: inherit;
 }
 [data-command]:hover { background: var(--vscode-button-secondaryHoverBackground); }
+
+/* ═══ Thinking block component ═════════════════════════════ */
+.thinking-block {
+  margin: var(--pi-space-sm) 0;
+  border-left: 2px solid var(--pi-border);
+  padding-left: var(--pi-space-md);
+}
+.thinking-header {
+  display: flex;
+  align-items: center;
+  gap: var(--pi-space-sm);
+  cursor: pointer;
+  user-select: none;
+  color: var(--pi-fg-secondary);
+  font-size: var(--pi-font-sm);
+  padding: var(--pi-space-xs) 0;
+}
+.thinking-header:hover { color: var(--pi-fg-primary); }
+.thinking-label { font-weight: 600; }
+.thinking-spinner {
+  width: 10px; height: 10px;
+  border: 2px solid var(--pi-border);
+  border-top-color: var(--pi-accent);
+  border-radius: 50%;
+  animation: piSpin 0.8s linear infinite;
+}
+.thinking-collapsed .thinking-spinner { display: none; }
+.thinking-line-count {
+  color: var(--pi-fg-tertiary);
+  font-size: var(--pi-font-xs);
+}
+.thinking-content {
+  display: none;
+  color: var(--pi-fg-secondary);
+  padding: var(--pi-space-sm) 0;
+  font-size: var(--pi-font-sm);
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+.thinking-block.expanded .thinking-content { display: block; }
+.thinking-expand-btn {
+  background: none; border: none;
+  color: var(--pi-fg-secondary); cursor: pointer;
+  font-size: var(--pi-font-xs); padding: 0;
+}
+.thinking-expand-btn:hover { color: var(--pi-fg-primary); }
+
+/* ═══ Dialog component ═════════════════════════════════════ */
+.pi-dialog-overlay {
+  position: fixed; inset: 0; z-index: 600;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex; align-items: center; justify-content: center;
+}
+.pi-dialog {
+  background: var(--pi-bg-surface);
+  border: 1px solid var(--pi-border);
+  border-radius: var(--pi-radius-lg);
+  box-shadow: var(--pi-shadow-dropdown);
+  padding: var(--pi-space-xl);
+  min-width: 320px;
+  max-width: 480px;
+  display: flex; flex-direction: column; gap: var(--pi-space-md);
+}
+.pi-dialog-prompt {
+  color: var(--pi-fg-primary);
+  font-size: var(--pi-font-md);
+}
+.pi-dialog-input {
+  background: var(--pi-bg-input);
+  border: 1px solid var(--pi-border-input);
+  border-radius: var(--pi-radius-sm);
+  color: var(--pi-fg-primary);
+  padding: var(--pi-space-sm) var(--pi-space-md);
+  font: inherit; font-size: var(--pi-font-md);
+  outline: none;
+}
+.pi-dialog-input:focus { border-color: var(--pi-border-focus); }
+.pi-dialog-actions {
+  display: flex; justify-content: flex-end; gap: var(--pi-space-sm);
+}
+.pi-dialog-btn {
+  background: none;
+  border: 1px solid var(--pi-border);
+  border-radius: var(--pi-radius-sm);
+  color: var(--pi-fg-primary);
+  cursor: pointer;
+  padding: var(--pi-space-sm) var(--pi-space-lg);
+  font-size: var(--pi-font-sm);
+}
+.pi-dialog-btn:hover { background: var(--pi-bg-hover); }
+.pi-dialog-confirm {
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  border-color: transparent;
+}
+.pi-dialog-confirm:hover { background: var(--vscode-button-hoverBackground); }
+.pi-dialog-option {
+  padding: var(--pi-space-sm) var(--pi-space-md);
+  border-radius: var(--pi-radius-sm);
+  cursor: pointer;
+  font-size: var(--pi-font-sm);
+}
+.pi-dialog-option:hover { background: var(--pi-bg-hover); }
+.pi-dialog-option.selected { background: var(--pi-bg-active); color: var(--pi-fg-active); }
+
+@keyframes piSpin {
+  to { transform: rotate(360deg); }
+}
