@@ -350,6 +350,14 @@ const ExtensionToWebviewSchema = z.discriminatedUnion("type", [
     }),
   }),
 
+  // Locale update (extension → webview, on startup)
+  z.object({
+    type: z.literal("setLocale"),
+    data: z.object({
+      locale: z.string(),
+    }),
+  }),
+
   // Interactive dialog (extension → webview)
   z.object({
     type: z.literal("show_dialog"),
