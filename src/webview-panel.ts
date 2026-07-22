@@ -426,7 +426,13 @@ export class PiWebviewPanel {
 <body>
   <div id="chat-container">
     <div id="welcome" class="welcome-message">
-      <h2>Pi coding agent</h2>
+      <div class="welcome-icon">π</div>
+      <h2>Pi Code Gui</h2>
+      <p class="welcome-subtitle">AI coding assistant in VS Code</p>
+      <div class="welcome-hints">
+        <p>Ctrl+Shift+P → <strong>PiGui: Set Up API Key / Login</strong></p>
+        <p>Or set <code>DEEPSEEK_API_KEY</code> in environment variables</p>
+      </div>
     </div>
   </div>
 

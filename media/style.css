@@ -211,6 +211,38 @@
     a:hover { text-decoration: underline; }
   }
 
+  .welcome-icon {
+    font-size: 3em;
+    font-weight: 300;
+    color: var(--accent);
+    margin-bottom: 12px;
+    opacity: 0.6;
+  }
+
+  .welcome-subtitle {
+    font-size: 0.95em !important;
+    color: var(--fg-tertiary) !important;
+    margin-bottom: 24px !important;
+  }
+
+  .welcome-hints {
+    text-align: left;
+    display: inline-block;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-size: 0.85em;
+    line-height: 1.8;
+
+    code {
+      background: var(--bg-tertiary);
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 0.9em;
+    }
+  }
+
   /* ═══ Code blocks (rich: header, copy btn, line numbers) ══ */
 
   .code-block-wrapper {
