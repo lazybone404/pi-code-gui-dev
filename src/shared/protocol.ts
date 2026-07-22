@@ -387,11 +387,17 @@ const ExtensionToWebviewSchema = z.discriminatedUnion("type", [
 
   // Session name update (extension → webview)
   z.object({
-    type: z.literal("sessionName"),
+    type: z.literal("sessionTabs"),
     data: z.object({
-      name: z.string(),
+      tabs: z.array(z.object({
+        id: z.string(),
+        name: z.string(),
+        active: z.boolean(),
+      })),
     }),
   }),
+
+  // Session name update (extension → webview)
 
   // Interactive dialog (extension → webview)
   z.object({

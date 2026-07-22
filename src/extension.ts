@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import * as fs from "node:fs";
 import { PiService } from "./pi-service.js";
 import { PiWebviewPanel } from "./webview-panel.js";
+import { ChatViewProvider, type ChatViewDeps } from "./chat-view.js";
 import { PiPackageService } from "./pi-package-service.js";
 import { PiPackagesTreeProvider } from "./pi-packages-tree-provider.js";
 import { initLogger, piLog, piWarn } from "./logger.js";
@@ -108,6 +109,65 @@ function handlePanelDispose(sw: SessionWindow): (piService: PiService) => void {
   };
 }
 
+// ── ChatViewDeps factory for sidebar webview ──────
+
+function buildChatViewDeps(): ChatViewDeps {
+  return {
+    getActiveSession() {
+      const sw = activeSessionWindow;
+      if (!sw) { return null; }
+      return {
+        id: sw.id,
+        name: sw.label || sw.piService.sessionName || "Session",
+        piService: sw.piService,
+        sessionPath: sw.piService.sessionFilePath,
+      };
+    },
+    getAllSessions() {
+      return sessions.map((sw) => ({
+        id: sw.id,
+        name: sw.label || sw.piService.sessionName || "Session",
+        piService: sw.piService,
+        sessionPath: sw.piService.sessionFilePath,
+      }));
+    },
+    async switchSession(id: string) {
+      const sw = sessions.find((s) => s.id === id);
+      if (sw) {
+        setActiveSession(sw);
+        // TODO: re-send history to webview
+        void initSessionInBackground(extContext!, sw, { openPath: sw.piService.sessionFilePath || undefined });
+      }
+    },
+    async newSession() {
+      const sw = createSessionWindow(extContext!);
+      setActiveSession(sw);
+      await initSessionInBackground(extContext!, sw, { fresh: true });
+      return {
+        id: sw.id,
+        name: "New Session",
+        piService: sw.piService,
+      };
+    },
+    async renameSession(_id: string, _name: string) { /* TODO */ },
+    async closeSession(id: string) {
+      const idx = sessions.findIndex((s) => s.id === id);
+      if (idx < 0) { return; }
+      const [sw] = sessions.splice(idx, 1);
+      sw.webviewPanel?.dispose?.();
+      if (activeSessionWindow === sw) {
+        setActiveSession(sessions[0] || null);
+      }
+    },
+    async login() {
+      const sw = activeSessionWindow || createSessionWindow(extContext!);
+      setActiveSession(sw);
+      await sw.piService.login();
+    },
+    onSessionChange: new vscode.EventEmitter<void>(),
+  };
+}
+
 // ── Activate ───────────────────────────────────────────
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
@@ -119,6 +179,15 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   context.subscriptions.push(outputChannel);
   initLogger(outputChannel);
   piLog("Pi Code Gui starting...");
+
+  // ── Register sidebar ChatViewProvider ───────────
+  const chatViewDeps = buildChatViewDeps();
+  const chatViewProvider = new ChatViewProvider(context, chatViewDeps);
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider("pi-code-gui.chat", chatViewProvider, {
+      webviewOptions: { retainContextWhenHidden: true },
+    }),
+  );
 
   // After extension host restart, workspace folders may not be available yet.
   // Without this guard, we fall back to process.cwd() which on remote servers

@@ -19,12 +19,10 @@ export function renderTemplate(opts: {
 <body>
   <!-- Navigation bar -->
   <div id="nav-bar" class="nav-bar">
-    <div class="nav-left">
-      <span id="nav-session" class="nav-session">Pi Code Gui</span>
-      <button id="nav-history" class="nav-icon-btn" title="Switch session">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-      </button>
-    </div>
+    <div id="nav-tabs" class="nav-tabs"></div>
+    <button id="nav-new-tab" class="nav-icon-btn" title="New session">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </button>
     <div class="nav-right">
       <button id="nav-model" class="nav-pill" title="Change model"></button>
       <button id="nav-thinking" class="nav-pill" title="Change thinking level"></button>

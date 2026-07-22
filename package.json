@@ -191,16 +191,23 @@
     "views": {
       "pi-code-gui": [
         {
+          "type": "webview",
+          "id": "pi-code-gui.chat",
+          "name": "Chat"
+        },
+        {
           "type": "tree",
           "id": "pi-code-gui.sessions",
           "name": "%view.sessions%",
-          "icon": "multiple-windows"
+          "icon": "multiple-windows",
+          "when": "pi-code-gui.showSessionTree"
         },
         {
           "type": "tree",
           "id": "pi-code-gui.packages",
           "name": "%view.packages%",
-          "icon": "package"
+          "icon": "package",
+          "when": "pi-code-gui.showPackageTree"
         }
       ]
     },
@@ -239,6 +246,16 @@
     "configuration": {
       "title": "%config.title%",
       "properties": {
+        "pi-code-gui.showSessionTree": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show the Past Sessions tree view in the sidebar. Sessions are managed via the chat tab bar by default."
+        },
+        "pi-code-gui.showPackageTree": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show the Packages tree view in the sidebar."
+        },
         "pi-code-gui.promptToInstall": {
           "type": "boolean",
           "default": true,

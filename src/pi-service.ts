@@ -1879,7 +1879,6 @@ export class PiService {
     if (!name) { return; }
     this.setSessionName(name);
     this._sessionNamed = true;
-    this.emit({ type: "sessionName", data: { name } });
   }
 
   private _restoreActiveToolsFromSession(): void {

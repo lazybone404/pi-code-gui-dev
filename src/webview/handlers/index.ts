@@ -191,6 +191,7 @@ export function createLiveCard(key: string, customType: string, label: string, c
       case "authStatus":          handleAuthStatus(msg.data); break;
       case "sessionName":         handleSessionName(msg.data); break;
       case "setOptions":          handleSetOptions(msg.data); break;
+      case "sessionTabs":         handleSessionTabs(msg.data); break;
 
       default:
         // Surface unknown message types as visible notifications.
@@ -2375,6 +2376,53 @@ export function handleSessionName(data: Record<string, unknown>): void {
   if (data && typeof data.name === "string") {
     var title = document.getElementById("nav-session");
     if (title) { title.textContent = data.name; }
+  }
+}
+
+export function handleSessionTabs(data: Record<string, unknown>): void {
+  var container = document.getElementById("nav-tabs");
+  if (!container) { return; }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  var tabs = (data as any).tabs || [];
+
+  container.innerHTML = "";
+  var c = container; // capture non-null for closure
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  tabs.forEach(function (t: any) {
+    var tab = document.createElement("button");
+    tab.className = "nav-tab" + (t.active ? " active" : "");
+    tab.title = t.name;
+
+    var label = document.createElement("span");
+    label.className = "nav-tab-label";
+    label.textContent = t.name || "Session";
+    tab.appendChild(label);
+
+    var close = document.createElement("span");
+    close.className = "nav-tab-close";
+    close.textContent = "\u00d7";
+    close.addEventListener("click", function (e) {
+      e.stopPropagation();
+      window.__vscode.postMessage({ type: "tabClose", data: { id: t.id } });
+    });
+    tab.appendChild(close);
+
+    tab.addEventListener("click", function () {
+      if (!t.active) {
+        window.__vscode.postMessage({ type: "tabSwitch", data: { id: t.id } });
+      }
+    });
+
+    c.appendChild(tab);
+  });
+
+  // Wire new-session button (once)
+  var addBtn = document.getElementById("nav-new-tab") as HTMLElement | null;
+  if (addBtn && !(addBtn as any)._wired) {
+    (addBtn as any)._wired = true;
+    addBtn.addEventListener("click", function () {
+      window.__vscode.postMessage({ type: "tabNew" });
+    });
   }
 }
 
