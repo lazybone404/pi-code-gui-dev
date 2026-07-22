@@ -1,36 +1,15 @@
 {
-  "name": "pi-code-gui",
-  "publisher": "NimbleTron",
-  "author": "Jack Noppé",
-  "displayName": "Pi Code Gui",
-  "description": "Native VS Code editor experience for Pi coding agent",
-  "version": "0.0.55",
+  "name": "pi-code-gui-dev",
+  "publisher": "lazybone404",
+  "author": "lazybone404",
+  "displayName": "Pi Code Gui Dev",
+  "description": "Pi coding agent GUI in VS Code (Chinese UI support)",
+  "version": "0.1.0",
   "license": "MIT",
-  "sponsor": {
-    "url": "https://github.com/sponsors/NimbleTronAI"
-  },
-  "icon": "pi-icon-light.png",
-  "galleryBanner": {
-    "color": "#1a1a2e",
-    "theme": "dark"
-  },
-  "keywords": [
-    "pi",
-    "coding-agent",
-    "ai",
-    "chat",
-    "agent",
-    "llm"
-  ],
-  "bugs": {
-    "url": "https://github.com/NimbleTronAI/pi-code-gui/issues"
-  },
-  "packageManager": "pnpm@10.33.4",
   "repository": {
     "type": "git",
-    "url": "https://github.com/NimbleTronAI/pi-code-gui"
+    "url": "https://github.com/lazybone404/pi-code-gui-dev"
   },
-  "homepage": "https://github.com/NimbleTronAI/pi-code-gui#readme",
   "type": "module",
   "engines": {
     "vscode": "^1.118.0"
