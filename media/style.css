@@ -27,10 +27,10 @@
   --pi-radius-pill: 10px;
 
   /* Typography */
-  --pi-font-xs:  0.75em;
-  --pi-font-sm:  0.82em;
-  --pi-font-md:  0.9em;
-  --pi-font-base: 13px;
+  --pi-font-xs:  0.8em;
+  --pi-font-sm:  0.85em;
+  --pi-font-md:  0.92em;
+  --pi-font-base: var(--vscode-chat-font-size, 13px);
   --pi-font-mono: var(--vscode-editor-font-family, monospace);
 
   /* Transitions */
@@ -162,7 +162,7 @@ body {
   color: var(--pi-fg-secondary);
   cursor: pointer;
   padding: 1px var(--pi-space-md);
-  font-size: var(--pi-font-xs);
+  font-size: var(--pi-font-sm);
   line-height: 1.6;
   white-space: nowrap;
   transition: background var(--pi-tran), color var(--pi-tran), border-color var(--pi-tran);
@@ -227,8 +227,8 @@ body {
   border-radius: var(--pi-radius-sm);
   color: var(--pi-fg-secondary);
   cursor: pointer;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
