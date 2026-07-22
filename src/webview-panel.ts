@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { PiService } from "./pi-service.js";
 import type { PiServiceEvent } from "./types.js";
 import { validateExtensionToWebview, type WebviewToExtension, type ExtensionToWebview } from "./shared/protocol.js";
+import { renderTemplate } from "./webview/template.js";
 
 export type PanelDisposeCallback = (piService: PiService) => void;
 
@@ -497,72 +498,12 @@ export class PiWebviewPanel {
       vscode.Uri.joinPath(this.context.extensionUri, "media", "style.css"),
     );
 
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}'; img-src ${webview.cspSource} blob: data:;">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pi Code Gui</title>
-  <link rel="stylesheet" href="${styleUri}">
-</head>
-<body>
-  <!-- Navigation bar: session identity + model config -->
-  <div id="nav-bar" class="nav-bar">
-    <div class="nav-left">
-      <span id="nav-session" class="nav-session">Pi Code Gui</span>
-      <button id="nav-history" class="nav-icon-btn" title="Switch session">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-      </button>
-    </div>
-    <div class="nav-right">
-      <button id="nav-model" class="nav-pill" title="Change model"></button>
-      <button id="nav-thinking" class="nav-pill" title="Change thinking level"></button>
-    </div>
-  </div>
-
-  <!-- Messages (scrollable) -->
-  <div id="chat-container">
-    <div id="welcome" class="welcome-message" style="display:none">
-      <div class="welcome-icon">π</div>
-      <h2>Pi Code Gui</h2>
-      <p class="welcome-subtitle">AI coding assistant in VS Code</p>
-      <div class="welcome-hints">
-        <button id="welcome-login-btn" class="welcome-btn">Set Up API Key / Login</button>
-        <p class="welcome-or">or set <code>DEEPSEEK_API_KEY</code> in environment variables</p>
-      </div>
-    </div>
-    <div id="live-panel"></div>
-  </div>
-
-  <!-- Input -->
-  <div id="attachment-bar"></div>
-  <div id="input-area">
-    <textarea id="prompt-input" placeholder="Ask Pi to help you code..." rows="1" disabled></textarea>
-    <div id="steer-split">
-      <button id="send-button" disabled title="Submit (Enter)">↵</button>
-      <button id="steer-dropdown" class="hidden" title="Switch to Queue">▾</button>
-    </div>
-    <button id="abort-button" class="hidden">■ Stop</button>
-  </div>
-
-  <!-- Status bar: metrics only -->
-  <div id="pi-status-bar">
-    <span id="pi-sb-dot"></span>
-    <div id="pi-extension-status" class="pi-sb-item"></div>
-    <div class="pi-sb-item spacer"></div>
-    <div class="pi-sb-item" id="pi-sb-usage" title="Click to set context budget"></div>
-    <div class="pi-sb-item" id="pi-sb-settings" title="Settings">⚙</div>
-  </div>
-  </div>
-
-  <div class="user-msg-selector-overlay" id="user-msg-overlay"></div>
-  <div class="settings-overlay" id="settings-overlay"></div>
-  <div class="slash-autocomplete" id="slash-autocomplete"></div>
-
-    <script nonce="${nonce}" src="${bundleUri}"></script>
-</body>
-</html>`;
+    return renderTemplate({
+      nonce,
+      bundleUri: bundleUri.toString(),
+      styleUri: styleUri.toString(),
+      cspSource: webview.cspSource,
+    });
   }
 
   /** Open VS Code quick pick to pick a model for the current session */
