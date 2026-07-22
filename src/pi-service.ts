@@ -4,6 +4,7 @@ import * as vscode from "vscode";
 import { createBridgeTools } from "./bridge-tools.js";
 import { type PiServiceEvent, validateExtensionToWebview } from "./types.js";
 import { piLog, piWarn } from "./logger.js";
+import { AuthService } from "./services/auth.js";
 
 /** Find the last element matching predicate (ES2023 findLast polyfill). */
 function reverseFind<T>(arr: T[], pred: (el: T) => boolean): T | undefined {
@@ -317,6 +318,7 @@ export class PiService {
   private AI: PiAi | null = null;
   private modelRuntime: any = null;
   private modelRegistry: any = null;
+  private authService: AuthService | null = null;
   private settingsManager: any = null;
   private sessionManager: any = null;
   private resourceLoader: any = null;
@@ -542,6 +544,13 @@ export class PiService {
 
       // Use ModelRuntime directly for all auth operations
       this.modelRegistry = new SDK.ModelRegistry(this.modelRuntime);
+      this.authService = new AuthService({
+        modelRuntime: this.modelRuntime,
+        modelRegistry: this.modelRegistry,
+        ai: this.AI,
+        get model() { return this._model; },
+        setModel: (provider: string, modelId: string) => this.setModel(provider, modelId),
+      });
       this.settingsManager = SDK.SettingsManager.create(cwd);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
@@ -2157,9 +2166,7 @@ export class PiService {
 
   /** Set a runtime API key (not persisted to disk) */
   setRuntimeApiKey(provider: string, key: string): void {
-    if (this.modelRuntime && typeof this.modelRuntime.setRuntimeApiKey === "function") {
-      void this.modelRuntime.setRuntimeApiKey(provider, key);
-    }
+    this.authService?.setRuntimeApiKey(provider, key);
   }
 
   // ── Usage / token stats ──────────────────────────────
@@ -2390,311 +2397,11 @@ export class PiService {
    * 4. For API key: prompt for key and save it
    */
   async login(): Promise<void> {
-    if (!this.modelRuntime || !this.modelRegistry) {
-      throw new Error("Pi session not initialized");
-    }
-
-    // ── Step 1: Auth type selector ─────────────────────
-    const authType = await this.pickAuthType();
-    if (!authType) { return; } // cancelled
-
-    // ── Step 2: Provider selector ───────────────────────
-    const providerChoice = await this.pickLoginProvider(authType);
-    if (!providerChoice) { return; } // cancelled
-
-    // ── Step 3: Execute login ───────────────────────────
-    if (providerChoice.authType === "oauth") {
-      await this.doOAuthLogin(providerChoice.id, providerChoice.name);
-    } else if (providerChoice.id === "amazon-bedrock") {
-      await this.showInfoMessage(
-        "Amazon Bedrock uses AWS credentials. Configure an AWS profile, IAM keys, or role-based credentials.",
-      );
-    } else {
-      await this.doApiKeyLogin(providerChoice.id, providerChoice.name);
-    }
+    await this.authService?.login();
   }
 
-  /** Show the auth type picker: Subscription (OAuth) vs API Key */
-  private async pickAuthType(): Promise<"oauth" | "api_key" | undefined> {
-    const ITEMS = [
-      { label: "Use a subscription", authType: "oauth" as const, description: "OAuth login for Anthropic, GitHub Copilot, OpenAI Codex" },
-      { label: "Use an API key", authType: "api_key" as const, description: "Enter an API key for any provider" },
-    ];
-    const pick = await this.showQuickPick(ITEMS, "Select authentication method:");
-    return pick?.authType;
-  }
-
-  /** Show provider picker for a given auth type */
-  private async pickLoginProvider(
-    authType: "oauth" | "api_key",
-  ): Promise<{ id: string; name: string; authType: string } | undefined> {
-    const options = this.getLoginProviderOptions(authType);
-    if (options.length === 0) {
-      const label = authType === "oauth" ? "No subscription providers available." : "No API key providers available.";
-      await this.showInfoMessage(label);
-      return undefined;
-    }
-    const pick = await this.showQuickPick(options, `Select ${authType === "oauth" ? "subscription" : "API key"} provider:`);
-    return pick;
-  }
-
-  /** Build the list of provider options for login */
-  private getLoginProviderOptions(
-    authType: "oauth" | "api_key",
-  ): Array<{ id: string; name: string; authType: string; label: string; description: string }> {
-    const oauthProviders = this.modelRuntime.getRegisteredProviderIds()
-      .filter((id: string) => this.modelRuntime.isUsingOAuth(id))
-      .map((id: string) => ({
-        id,
-        name: this.modelRegistry?.getProviderDisplayName(id) ?? id,
-      }));
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const oauthProviderIds = new Set(oauthProviders.map((p: any) => p.id));
-    const options: Array<{ id: string; name: string; authType: string; label: string; description: string }> = [];
-
-    if (authType === "oauth") {
-      // OAuth providers
-      for (const provider of oauthProviders) {
-        const authStatus = this.modelRegistry.getProviderAuthStatus(provider.id);
-        options.push({
-          id: provider.id,
-          name: provider.name,
-          authType: "oauth",
-          label: provider.name,
-          description: authStatus?.configured ? "$(check) Already configured" : "",
-        });
-      }
-    } else {
-      // API key providers — all model providers that aren't OAuth-only
-      const allModels = this.modelRegistry.getAll();
-      const seenProviders = new Set<string>();
-      for (const model of allModels) {
-        const providerId = model.provider;
-        if (seenProviders.has(providerId)) { continue; }
-        seenProviders.add(providerId);
-        // Skip providers that only support OAuth
-        if (oauthProviderIds.has(providerId)) { continue; }
-        const displayName = this.modelRegistry.getProviderDisplayName(providerId);
-        const authStatus = this.modelRegistry.getProviderAuthStatus(providerId);
-        options.push({
-          id: providerId,
-          name: displayName,
-          authType: "api_key",
-          label: displayName,
-          description: authStatus?.configured
-            ? `$(check) Already configured (${authStatus.source})`
-            : "",
-        });
-      }
-    }
-
-    return options.sort((a, b) => a.name.localeCompare(b.name));
-  }
-
-  /** Show a VS Code quick pick (wraps showQuickPick since it's async and returns proper type) */
-  private async showQuickPick<T extends { label: string; description?: string }>(
-    items: T[],
-    placeHolder: string,
-  ): Promise<T | undefined> {
-    const vscode = await import("vscode");
-    const picked = await vscode.window.showQuickPick(items, { placeHolder, matchOnDescription: true });
-    return picked;
-  }
-
-  /** Show an info message */
-  private async showInfoMessage(message: string): Promise<void> {
-    const vscode = await import("vscode");
-    await vscode.window.showInformationMessage(message);
-  }
-
-  /** Show an error message */
-  private async showErrorMessage(message: string): Promise<void> {
-    const vscode = await import("vscode");
-    await vscode.window.showErrorMessage(message);
-  }
-
-  /**
-   * Execute OAuth login flow for a provider.
-   * Opens the browser, handles callbacks, and waits for completion.
-   */
-  private async doOAuthLogin(providerId: string, providerName: string): Promise<void> {
-    const vscode = await import("vscode");
-    const previousModel = this._model;
-
-    try {
-      await vscode.window.withProgress(
-        {
-          location: vscode.ProgressLocation.Notification,
-          title: `Logging in to ${providerName}...`,
-          cancellable: true,
-        },
-        async (progress, token) => {
-          const abortController = new AbortController();
-          token.onCancellationRequested(() => abortController.abort());
-
-          await this.modelRuntime.login(providerId, {
-            onAuth: (info: { url: string; instructions?: string }) => {
-              // Open the URL in the browser
-              vscode.env.openExternal(vscode.Uri.parse(info.url));
-              if (info.instructions) {
-                progress.report({ message: info.instructions });
-              }
-            },
-            onPrompt: async (prompt: { message: string; placeholder?: string }) => {
-              // Show an input box for the response
-              return vscode.window.showInputBox({
-                prompt: prompt.message,
-                placeHolder: prompt.placeholder,
-                password: true,
-                ignoreFocusOut: true,
-              }) ?? "";
-            },
-            onProgress: (message: string) => {
-              progress.report({ message });
-            },
-            onManualCodeInput: () => {
-              // For callback-server providers, prompt for manual paste
-              return new Promise<string>((resolve, reject) => {
-                token.onCancellationRequested(() => reject(new Error("Login cancelled")));
-                vscode.window
-                  .showInputBox({
-                    prompt: "Paste redirect URL below, or complete login in browser:",
-                    ignoreFocusOut: true,
-                  })
-                  .then((value) => {
-                    if (value) { resolve(value); }
-                    else { reject(new Error("Login cancelled")); }
-                  });
-              });
-            },
-            signal: abortController.signal,
-          });
-
-          progress.report({ message: "Login successful!" });
-        },
-      );
-
-      // Refresh model registry and try to select a model for the provider
-      this.modelRegistry.refresh();
-      await this.completeLogin(providerId, providerName, "oauth", previousModel);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      if (error.message !== "Login cancelled") {
-        await this.showErrorMessage(`Failed to login to ${providerName}: ${error.message ?? error}`);
-      }
-    }
-  }
-
-  /**
-   * Execute API key login flow for a provider.
-   */
-  private async doApiKeyLogin(providerId: string, providerName: string): Promise<void> {
-    const vscode = await import("vscode");
-    const previousModel = this._model;
-
-    try {
-      const apiKey = await vscode.window.showInputBox({
-        prompt: `Enter API key for ${providerName}:`,
-        password: true,
-        placeHolder: "sk-...",
-        validateInput: (value) => (value.trim() ? undefined : "API key required"),
-        ignoreFocusOut: true,
-      });
-
-      if (!apiKey || !apiKey.trim()) {
-        return; // cancelled
-      }
-
-      await this.modelRuntime.setRuntimeApiKey(providerId, apiKey.trim());
-      this.modelRegistry.refresh();
-      await this.completeLogin(providerId, providerName, "api_key", previousModel);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      if (error.message !== "Login cancelled") {
-        await this.showErrorMessage(`Failed to save API key for ${providerName}: ${error.message ?? error}`);
-      }
-    }
-  }
-
-  /** After login, try to select a default model for the provider */
-  private async completeLogin(
-    providerId: string,
-    providerName: string,
-    authType: string,
-    previousModel: { id?: string; provider?: string } | null,
-  ): Promise<void> {
-    const actionLabel = authType === "oauth" ? `Logged in to ${providerName}` : `Saved API key for ${providerName}`;
-
-    // Try to select a default model for the provider if the current model is "unknown"
-    if (this.AI && (!previousModel || previousModel.provider === "unknown")) {
-      const availableModels = this.modelRegistry.getAvailable();
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const providerModels = availableModels.filter((m: any) => m.provider === providerId);
-      if (providerModels.length > 0) {
-        try {
-          await this.setModel(providerId, providerModels[0].id);
-          await this.showInfoMessage(`${actionLabel}. Selected ${providerModels[0].id}.`);
-        } catch {
-          await this.showInfoMessage(`${actionLabel}.`);
-        }
-        return;
-      }
-    }
-
-    await this.showInfoMessage(`${actionLabel}.`);
-  }
-
-  /**
-   * Show the logout flow for a provider.
-   * Mirrors the pi CLI's /logout command.
-   */
   async logout(): Promise<void> {
-    if (!this.modelRuntime || !this.modelRegistry) {
-      throw new Error("Pi session not initialized");
-    }
-
-    // Build list of providers that have credentials saved
-    const options: Array<{ id: string; name: string; label: string; description: string }> = [];
-    const creds = await this.modelRuntime.listCredentials();
-    for (const c of creds) {
-      const providerId = c.providerId;
-      const auth = await this.modelRuntime.getAuth(providerId);
-      const credential = auth ? { type: auth.source === "oauth" ? "oauth" : "api_key", ...auth.auth } : undefined;
-      if (!credential) { continue; }
-      const displayName = this.modelRegistry.getProviderDisplayName(providerId);
-      options.push({
-        id: providerId,
-        name: displayName,
-        label: displayName,
-        description: credential.type === "oauth" ? "OAuth subscription" : "API key",
-      });
-    }
-
-    if (options.length === 0) {
-      await this.showInfoMessage(
-        "No stored credentials to remove. /logout only removes credentials saved by /login; environment variables and models.json config are unchanged.",
-      );
-      return;
-    }
-
-    const pick = await this.showQuickPick(
-      options.sort((a, b) => a.name.localeCompare(b.name)),
-      "Select provider to logout:",
-    );
-    if (!pick) { return; }
-
-    try {
-      await this.modelRuntime.logout(pick.id);
-      this.modelRegistry.refresh();
-      const message =
-        pick.description === "OAuth subscription"
-          ? `Logged out of ${pick.name}`
-          : `Removed stored API key for ${pick.name}. Environment variables and models.json config are unchanged.`;
-      await this.showInfoMessage(message);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      await this.showErrorMessage(`Logout failed: ${error.message ?? error}`);
-    }
+    await this.authService?.logout();
   }
 
   // ── Cleanup ────────────────────────────────────────────
