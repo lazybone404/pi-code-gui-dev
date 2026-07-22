@@ -195,3 +195,31 @@ function foo(): string { return "bar"; }
 - [ ] 手动会话改名（右键 → Rename）
 - [ ] 聊天面板内快速切换最近 5 个会话
 - [ ] 发布到 VS Code 市场 / Open VSX
+
+---
+
+## 六、Git 提交规范
+
+### 必须提交
+- `src/**` — 所有源码
+- `package.json`、`pnpm-lock.yaml` — 依赖管理
+- `tsconfig*.json`、`esbuild*.js`、`eslint.config.mjs` — 构建和检查配置
+- `media/style.css`、`media/*.svg` — 静态资源
+- `*.md` — 文档
+- `.github/workflows/` — CI
+- `.vscode/launch.json`、`.vscode/tasks.json`、`.vscode/extensions.json` — 团队共享的编辑器配置
+- `.vscodeignore`、`.npmrc` — 打包和 npm 配置
+
+### 不能提交
+- `dist/` — 编译产物，但是打包时会带（`.vscodeignore` 里有例外）
+- `*.vsix` — 安装包
+- `node_modules/` — 依赖
+- `.DS_Store`、`Thumbs.db` — 操作系统文件
+- `.vscode/settings.json` — 个人编辑器设置
+- `.env` — 密钥
+
+### 提交前检查
+```bash
+pnpm run compile    # check-types + lint + build
+npx tsc --noEmit    # 再次确认
+
