@@ -190,7 +190,7 @@ export function createLiveCard(key: string, customType: string, label: string, c
       case "setLocale":            handleSetLocale(msg.data); break;
       case "authStatus":          handleAuthStatus(msg.data); break;
       case "sessionName":         handleSessionName(msg.data); break;
-      case "setModelOptions":     handleSetModelOptions(msg.data); break;
+      case "setOptions":          handleSetOptions(msg.data); break;
 
       default:
         // Surface unknown message types as visible notifications.
@@ -1374,14 +1374,45 @@ export function sendPrompt(): void {
       }));
     });
   }
+  // ── Status bar click handlers (in-webview dropdowns) ──
   if (sbEffort) {
-    sbEffort.addEventListener("click", function () {
-      window.__vscode.postMessage({ type: "pickEffort" });
+    sbEffort.addEventListener("click", function (e) {
+      e.stopPropagation();
+      var levels = [
+        { label: "auto", desc: "Let the model decide" },
+        { label: "none", desc: "No effort" },
+        { label: "low", desc: "Low effort" },
+        { label: "medium", desc: "Medium effort" },
+        { label: "high", desc: "High effort" },
+      ];
+      var cur = sbEffort ? (sbEffort.textContent || "").replace(t("footer.effort") + ": ", "") : "auto";
+      showDropdown(sbEffort as HTMLElement, levels.map(function (l) { return {
+        key: l.label,
+        label: (l.label === cur ? "✓ " : "") + l.label,
+        desc: l.desc,
+        active: l.label === cur,
+        onSelect: function () { window.__vscode.postMessage({ type: "selectEffort", data: { effort: l.label } }); },
+      };}));
     });
   }
   if (sbUsage) {
-    sbUsage.addEventListener("click", function () {
-      window.__vscode.postMessage({ type: "pickContextBudget" });
+    sbUsage.addEventListener("click", function (e) {
+      e.stopPropagation();
+      var budgets = [
+        { label: "Model default", desc: "Built-in context window", value: 0 },
+        { label: "100K", desc: "Compact at ~0.1M tokens", value: 100000 },
+        { label: "200K", desc: "Compact at ~0.2M tokens", value: 200000 },
+        { label: "500K", desc: "Compact at ~0.5M tokens", value: 500000 },
+        { label: "1M", desc: "Compact at ~1M tokens", value: 1000000 },
+      ];
+      var curVal = 0; // current budget not tracked in webview state, just show all
+      showDropdown(sbUsage as HTMLElement, budgets.map(function (b) { return {
+        key: String(b.value),
+        label: (b.value === curVal ? "✓ " : "") + b.label,
+        desc: b.desc,
+        active: b.value === curVal,
+        onSelect: function () { window.__vscode.postMessage({ type: "selectBudget", data: { value: b.value } }); },
+      };}));
     });
   }
 let sbSettings = document.getElementById("pi-sb-settings");
@@ -2347,7 +2378,7 @@ var _modelOptions: Array<{ provider: string; id: string; name?: string; current:
 var _thinkingOptions: Array<{ label: string; description: string; current: boolean; isDefault: boolean }> = [];
 var _activeDropdown: HTMLElement | null = null;
 
-export function handleSetModelOptions(data: Record<string, unknown>): void {
+export function handleSetOptions(data: Record<string, unknown>): void {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if (data && Array.isArray((data as any).models)) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

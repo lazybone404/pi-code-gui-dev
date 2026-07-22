@@ -368,7 +368,7 @@ const ExtensionToWebviewSchema = z.discriminatedUnion("type", [
 
   // Model & thinking options (extension → webview)
   z.object({
-    type: z.literal("setModelOptions"),
+    type: z.literal("setOptions"),
     data: z.object({
       models: z.array(z.object({
         provider: z.string(),

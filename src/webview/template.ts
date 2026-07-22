@@ -76,7 +76,8 @@ export function renderTemplate(opts: {
     <span id="pi-sb-dot"></span>
     <div id="pi-extension-status" class="pi-sb-item"></div>
     <div class="pi-sb-item spacer"></div>
-    <div class="pi-sb-item" id="pi-sb-usage" title="Click to set context budget"></div>
+    <div class="pi-sb-item" id="pi-sb-effort" title="Change effort"></div>
+    <div class="pi-sb-item" id="pi-sb-usage" title="Change context budget"></div>
     <div class="pi-sb-item" id="pi-sb-settings" title="Settings">⚙</div>
   </div>
 

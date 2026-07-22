@@ -177,7 +177,7 @@ export class PiWebviewPanel {
 
           case "webviewReady":
             await this._sendAuthStatus();
-            await this._sendModelOptions();
+            await this._sendOptions();
             break;
 
           case "searchSessions":
@@ -201,6 +201,27 @@ export class PiWebviewPanel {
             }
             break;
           }
+
+          case "selectEffort": {
+            const sel = message as { data: { effort: string } };
+            const effort = sel.data?.effort;
+            if (effort) {
+              await this.piService.setEffort(effort);
+            }
+            break;
+          }
+
+          case "selectBudget": {
+            const sel = message as { data: { value: number } };
+            if (typeof sel.data?.value === "number") {
+              await this.piService.setContextBudget(sel.data.value);
+            }
+            break;
+          }
+
+          case "toggleSettings":
+            // Settings panel is toggled in-webview
+            break;
 
           case "openUrl":
             vscode.env.openExternal(vscode.Uri.parse(message.url));
@@ -348,7 +369,7 @@ export class PiWebviewPanel {
   }
 
   /** Send available models and thinking levels for in-webview dropdowns. */
-  private async _sendModelOptions(): Promise<void> {
+  private async _sendOptions(): Promise<void> {
     try {
       const models = await this.piService.getAvailableModels();
       const currentModel = this.piService.model;
@@ -364,7 +385,7 @@ export class PiWebviewPanel {
       const defaultThinking = this.piService.getDefaultThinking();
 
       this.postMessage({
-        type: "setModelOptions",
+        type: "setOptions",
         data: {
           models: models.map((m) => ({
             provider: m.provider,
