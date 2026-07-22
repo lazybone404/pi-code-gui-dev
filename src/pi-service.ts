@@ -316,7 +316,6 @@ export class PiService {
   private SDK: PiSdk | null = null;
   private AI: PiAi | null = null;
   private modelRuntime: any = null;
-  private authStorage: any = null;
   private modelRegistry: any = null;
   private settingsManager: any = null;
   private sessionManager: any = null;
@@ -464,64 +463,6 @@ export class PiService {
     await fs.promises.unlink(filePath);
   }
 
-  /**
-   * Create a compatibility shim that wraps ModelRuntime to match
-   * the old AuthStorage API used throughout this class.
-   */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private createAuthStorageShim(modelRuntime: any): any {
-    return {
-      setRuntimeApiKey: (provider: string, key: string) =>
-        modelRuntime.setRuntimeApiKey(provider, key),
-
-      getApiKey: async (provider: string) => {
-        try {
-          const auth = await modelRuntime.getAuth(provider);
-          return auth?.auth?.apiKey;
-        } catch {
-          return undefined;
-        }
-      },
-
-      getOAuthProviders: () => {
-        // ModelRuntime doesn't expose OAuth-only providers directly;
-        // filter registered providers that use OAuth.
-        const providers = modelRuntime.getRegisteredProviderIds();
-        return providers
-          .filter((id: string) => modelRuntime.isUsingOAuth(id))
-          .map((id: string) => ({ id, name: modelRuntime.getProvider?.(id)?.name ?? id }));
-      },
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      login: (providerId: string, options: any) =>
-        modelRuntime.login(providerId, options),
-
-      logout: (providerId: string) =>
-        modelRuntime.logout(providerId),
-
-      list: async () => {
-        const creds = await modelRuntime.listCredentials();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return creds.map((c: any) => c.providerId);
-      },
-
-      get: async (providerId: string) => {
-        const auth = await modelRuntime.getAuth(providerId);
-        if (!auth) { return undefined; }
-        return {
-          type: auth.source === "oauth" ? "oauth" : "api_key",
-          ...auth.auth,
-        };
-      },
-
-      set: async (providerId: string, credential: { type: string; key?: string }) => {
-        if (credential.type === "api_key" && credential.key) {
-          await modelRuntime.setRuntimeApiKey(providerId, credential.key);
-        }
-      },
-    };
-  }
-
   async initialize(opts?: { fresh?: boolean; openPath?: string }): Promise<{ success: boolean; error?: string }> {
     const fresh = opts?.fresh ?? false;
     const openPath = opts?.openPath ?? null;
@@ -599,9 +540,7 @@ export class PiService {
         await this.modelRuntime.setRuntimeApiKey("openai", openaiKey);
       }
 
-      // Compatibility shim: wrap modelRuntime to match old AuthStorage interface
-      this.authStorage = this.createAuthStorageShim(this.modelRuntime);
-
+      // Use ModelRuntime directly for all auth operations
       this.modelRegistry = new SDK.ModelRegistry(this.modelRuntime);
       this.settingsManager = SDK.SettingsManager.create(cwd);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -2188,9 +2127,10 @@ export class PiService {
       const model = this.AI.getModel(this._model.provider, this._model.id);
       if (!model) { return null; }
 
-      const apiKey = this.authStorage
-        ? await this.authStorage.getApiKey(this._model.provider!)
+      const authData = this.modelRuntime
+        ? await this.modelRuntime.getAuth(this._model.provider!)
         : undefined;
+      const apiKey = authData?.auth?.apiKey;
 
       const context = {
         systemPrompt: "Generate a concise 3-word summary of the following user request. Respond with ONLY the three words, lowercase, no punctuation, no quotes, no explanation.",
@@ -2217,8 +2157,8 @@ export class PiService {
 
   /** Set a runtime API key (not persisted to disk) */
   setRuntimeApiKey(provider: string, key: string): void {
-    if (this.authStorage && typeof this.authStorage.setRuntimeApiKey === "function") {
-      this.authStorage.setRuntimeApiKey(provider, key);
+    if (this.modelRuntime && typeof this.modelRuntime.setRuntimeApiKey === "function") {
+      void this.modelRuntime.setRuntimeApiKey(provider, key);
     }
   }
 
@@ -2450,7 +2390,7 @@ export class PiService {
    * 4. For API key: prompt for key and save it
    */
   async login(): Promise<void> {
-    if (!this.authStorage || !this.modelRegistry) {
+    if (!this.modelRuntime || !this.modelRegistry) {
       throw new Error("Pi session not initialized");
     }
 
@@ -2502,7 +2442,12 @@ export class PiService {
   private getLoginProviderOptions(
     authType: "oauth" | "api_key",
   ): Array<{ id: string; name: string; authType: string; label: string; description: string }> {
-    const oauthProviders = this.authStorage.getOAuthProviders();
+    const oauthProviders = this.modelRuntime.getRegisteredProviderIds()
+      .filter((id: string) => this.modelRuntime.isUsingOAuth(id))
+      .map((id: string) => ({
+        id,
+        name: this.modelRegistry?.getProviderDisplayName(id) ?? id,
+      }));
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const oauthProviderIds = new Set(oauthProviders.map((p: any) => p.id));
     const options: Array<{ id: string; name: string; authType: string; label: string; description: string }> = [];
@@ -2587,7 +2532,7 @@ export class PiService {
           const abortController = new AbortController();
           token.onCancellationRequested(() => abortController.abort());
 
-          await this.authStorage.login(providerId, {
+          await this.modelRuntime.login(providerId, {
             onAuth: (info: { url: string; instructions?: string }) => {
               // Open the URL in the browser
               vscode.env.openExternal(vscode.Uri.parse(info.url));
@@ -2660,7 +2605,7 @@ export class PiService {
         return; // cancelled
       }
 
-      this.authStorage.set(providerId, { type: "api_key", key: apiKey.trim() });
+      await this.modelRuntime.setRuntimeApiKey(providerId, apiKey.trim());
       this.modelRegistry.refresh();
       await this.completeLogin(providerId, providerName, "api_key", previousModel);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -2704,14 +2649,17 @@ export class PiService {
    * Mirrors the pi CLI's /logout command.
    */
   async logout(): Promise<void> {
-    if (!this.authStorage || !this.modelRegistry) {
+    if (!this.modelRuntime || !this.modelRegistry) {
       throw new Error("Pi session not initialized");
     }
 
     // Build list of providers that have credentials saved
     const options: Array<{ id: string; name: string; label: string; description: string }> = [];
-    for (const providerId of this.authStorage.list()) {
-      const credential = this.authStorage.get(providerId);
+    const creds = await this.modelRuntime.listCredentials();
+    for (const c of creds) {
+      const providerId = c.providerId;
+      const auth = await this.modelRuntime.getAuth(providerId);
+      const credential = auth ? { type: auth.source === "oauth" ? "oauth" : "api_key", ...auth.auth } : undefined;
       if (!credential) { continue; }
       const displayName = this.modelRegistry.getProviderDisplayName(providerId);
       options.push({
@@ -2736,7 +2684,7 @@ export class PiService {
     if (!pick) { return; }
 
     try {
-      this.authStorage.logout(pick.id);
+      await this.modelRuntime.logout(pick.id);
       this.modelRegistry.refresh();
       const message =
         pick.description === "OAuth subscription"
