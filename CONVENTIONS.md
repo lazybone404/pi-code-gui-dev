@@ -33,17 +33,21 @@ Types:
 | `i18n` | Translation / locale changes |
 
 Examples:
+
 ```
-feat: add Chinese UI support via vscode.l10n
-fix: Windows ESM import fails on absolute paths
-refactor: replace authStorage shim with direct ModelRuntime calls
+feat: 新增中文界面 (add Chinese UI via vscode.l10n)
+
+- 使用 vscode.l10n API 替换所有硬编码英文
+- extension 侧菜单和命令已翻译
+- webview 侧聊天界面文本已翻译
 ```
 
 ### Commit Rules
 
 - One logical change per commit
-- Write in English
-- Keep summary line under 72 characters
+- **Title**: English (for Conventional Commits tooling), with optional Chinese prefix
+- **Body**: English required + Chinese translation recommended
+- Keep title line under 72 characters (total)
 - Use imperative mood ("fix", not "fixed" or "fixes")
 
 ---
@@ -184,10 +188,75 @@ The goal: no file exceeds 500 lines. If it does, split it.
 
 ---
 
-## 7. General
+## 7. Design Principles
+
+These seven principles from software engineering guide all design decisions.
+
+### 1. Single Responsibility (SRP — 单一职责)
+
+A module should have exactly one reason to change.
+
+- **Rule**: no file exceeds 500 lines. If it does, split it.
+- **Example**: `pi-service.ts` (2700 lines) → `auth.ts`, `model.ts`, `session.ts`.
+
+### 2. Open/Closed (OCP — 开闭原则)
+
+Open for extension, closed for modification.
+
+- **Rule**: adding a new bridge tool or command should mean adding a new file,
+  not editing existing code.
+- **Example**: bridge tools are defined in a factory function that returns an
+  array — new tools are just new entries in the array.
+
+### 3. Liskov Substitution (LSP — 里氏替换)
+
+A substitute must be indistinguishable from the real thing.
+
+- **Rule**: no fake objects that "pretend" to be something they are not.
+- **Example**: the `authStorage` shim wraps `ModelRuntime` to fake the old
+  `AuthStorage` API. This must be removed — call `ModelRuntime` directly.
+
+### 4. Interface Segregation (ISP — 接口隔离)
+
+Small, focused interfaces are better than one big one.
+
+- **Rule**: each service module exports only what its callers need.
+- **Example**: `auth.ts` exports `login`, `logout`, `setApiKey`, `getAuth`;
+  `model.ts` exports `switchModel`, `cycleModel`, `getAvailableModels`.
+
+### 5. Dependency Inversion (DIP — 依赖倒置)
+
+High-level modules should not depend on low-level modules. Both depend on
+abstractions.
+
+- **Rule**: services communicate through clear event interfaces or shared
+  types, not direct imports of each other.
+- **Example**: `PiService` should not import `WebviewPanel`. Events from
+  `PiService` flow through a typed event bus that the webview subscribes to.
+
+### 6. Don't Repeat Yourself (DRY — 不要重复)
+
+Every piece of knowledge has a single, unambiguous representation.
+
+- **Rule**: shared logic is extracted; no copy-paste.
+- **Example**: `workspaceRelativePath` used in every bridge tool → extract
+  to `shared/path-utils.ts`.
+
+### 7. Keep It Simple (KISS — 保持简单)
+
+Simple is better than clever.
+
+- **Rule**: prefer direct calls over abstraction layers. If the SDK provides
+  `ModelRuntime`, use `ModelRuntime` — don't wrap it.
+- **Example**: the `createAuthStorageShim` is an unnecessary layer of
+  indirection. Delete it and call `modelRuntime` directly.
+
+---
+
+## 8. General
 
 - **Files**: use LF line endings, UTF-8 encoding
-- **Comments**: English only
+- **Comments**: English or Chinese, whichever is clearer. Technical terms stay in English.
 - **Logs**: use `piLog()` for info, `piWarn()` for warnings, `console.error()` only for fatal
 - **PRs**: not required (solo project), push directly to `dev`
 - **Before push**: run `pnpm run compile` (check-types + lint + build)

@@ -19,7 +19,7 @@
 
 详见 [CONVENTIONS.md](./CONVENTIONS.md)
 
-- 代码注释和 Commit 用英文
+- 注释中英均可，Commit 标题英文 + 正文中英双写
 - ESLint 沿用原项目规则（严格模式），详见 CONVENTIONS.md §3
 - 改动加测试
 - 国际化做正经 i18n
