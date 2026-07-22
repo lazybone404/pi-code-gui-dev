@@ -33,15 +33,30 @@ export function renderTemplate(opts: {
 
   <!-- Messages (scrollable) -->
   <div id="chat-container">
-    <div id="welcome" class="welcome-message" style="display:none">
-      <div class="welcome-icon">π</div>
-      <h2>Pi Code Gui</h2>
-      <p class="welcome-subtitle">AI coding assistant in VS Code</p>
-      <div class="welcome-hints">
-        <button id="welcome-login-btn" class="welcome-btn">Set Up API Key / Login</button>
-        <p class="welcome-or">or set <code>DEEPSEEK_API_KEY</code> in environment variables</p>
-      </div>
+  <!-- Welcome / Auth page (centered empty state) -->
+  <div id="welcome" class="welcome-page" style="display:none">
+    <div class="welcome-ascii">
+      <svg width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.6">
+        <circle cx="32" cy="32" r="28"/>
+        <text x="32" y="40" text-anchor="middle" font-size="32" font-family="serif" fill="currentColor" stroke="none" opacity="0.8">π</text>
+      </svg>
     </div>
+    <h2 class="welcome-title">Pi Code Gui</h2>
+    <p class="welcome-desc">Connect your API key to get started</p>
+    <div id="welcome-actions" class="welcome-actions">
+      <button id="welcome-login-btn" class="welcome-connect-btn">Connect Account</button>
+    </div>
+    <div id="welcome-auth-url" class="welcome-auth-url" style="display:none">
+      <div class="welcome-url-row">
+        <input id="welcome-url-input" class="welcome-url-input" readonly />
+        <button id="welcome-url-copy" class="welcome-url-copy">Copy</button>
+      </div>
+      <p id="welcome-auth-waiting" class="welcome-auth-waiting">Waiting for authentication...</p>
+    </div>
+    <p class="welcome-hint">
+      Or set <code>DEEPSEEK_API_KEY</code> in your environment
+    </p>
+  </div>
     <div id="live-panel"></div>
   </div>
 

@@ -467,8 +467,8 @@ body {
   line-height: 1.5;
 }
 
-/* ═══ Welcome Page ═════════════════════════════════════════ */
-.welcome-message {
+/* ═══ Welcome / Auth Page ═══════════════════════════════════ */
+.welcome-page {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -476,53 +476,104 @@ body {
   justify-content: center;
   text-align: center;
   padding: var(--pi-space-2xl);
-  gap: var(--pi-space-lg);
+  gap: var(--pi-space-md);
   animation: piFadeIn 0.3s ease;
 }
-.welcome-icon {
-  font-size: 48px;
-  font-weight: 300;
-  color: var(--pi-fg-secondary);
-  width: 80px;
-  height: 80px;
-  border: 1px solid var(--pi-border);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+
+.welcome-ascii {
   margin-bottom: var(--pi-space-md);
+  color: var(--pi-fg-secondary);
 }
-.welcome-message h2 {
-  font-size: 1.3em;
+
+.welcome-title {
+  font-size: 1.4em;
   font-weight: 600;
+  color: var(--pi-fg-primary);
 }
-.welcome-subtitle {
+
+.welcome-desc {
   color: var(--pi-fg-secondary);
   font-size: var(--pi-font-md);
-  margin-bottom: var(--pi-space-lg);
 }
-.welcome-btn {
+
+.welcome-actions {
+  margin-top: var(--pi-space-lg);
+}
+
+.welcome-connect-btn {
   background: var(--vscode-button-background);
   color: var(--vscode-button-foreground);
   border: none;
-  border-radius: var(--pi-radius-sm);
+  border-radius: var(--pi-radius-md);
   padding: var(--pi-space-md) var(--pi-space-xl);
   font-size: var(--pi-font-md);
   font-weight: 600;
   cursor: pointer;
-  transition: background var(--pi-tran);
+  transition: background var(--pi-tran), opacity var(--pi-tran);
 }
-.welcome-btn:hover { background: var(--vscode-button-hoverBackground); }
-.welcome-or {
-  color: var(--pi-fg-tertiary);
-  margin-top: var(--pi-space-md);
+
+.welcome-connect-btn:hover {
+  background: var(--vscode-button-hoverBackground);
+}
+
+/* Auth URL display (for OAuth flows) */
+.welcome-auth-url {
+  margin-top: var(--pi-space-lg);
+  width: 100%;
+  max-width: 420px;
+}
+
+.welcome-url-row {
+  display: flex;
+  align-items: center;
+  gap: var(--pi-space-sm);
+}
+
+.welcome-url-input {
+  flex: 1;
+  background: var(--pi-bg-input);
+  border: 1px solid var(--pi-border-input);
+  border-radius: var(--pi-radius-sm);
+  color: var(--pi-fg-primary);
+  font: var(--pi-font-mono);
+  font-size: var(--pi-font-xs);
+  padding: var(--pi-space-sm) var(--pi-space-md);
+  outline: none;
+}
+
+.welcome-url-copy {
+  background: none;
+  border: 1px solid var(--pi-border);
+  border-radius: var(--pi-radius-sm);
+  color: var(--pi-fg-secondary);
+  cursor: pointer;
+  padding: var(--pi-space-sm) var(--pi-space-md);
   font-size: var(--pi-font-sm);
+  white-space: nowrap;
 }
-.welcome-or code {
+
+.welcome-url-copy:hover {
+  background: var(--pi-bg-hover);
+  color: var(--pi-fg-primary);
+}
+
+.welcome-auth-waiting {
+  color: var(--pi-fg-tertiary);
+  font-size: var(--pi-font-sm);
+  margin-top: var(--pi-space-md);
+  animation: piFadeIn 0.5s ease;
+}
+
+.welcome-hint {
+  color: var(--pi-fg-tertiary);
+  font-size: var(--pi-font-xs);
+  margin-top: var(--pi-space-xl);
+}
+
+.welcome-hint code {
   background: var(--pi-bg-code);
   padding: 1px 5px;
   border-radius: var(--pi-radius-sm);
-  font-size: var(--pi-font-xs);
 }
 
 /* ═══ Overlays ════════════════════════════════════════════ */
