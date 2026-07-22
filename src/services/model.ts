@@ -196,7 +196,7 @@ export class ModelService {
         { label: "Claude Opus 4.5", provider: "anthropic", modelId: "claude-opus-4-5" },
         { label: "GPT 4o", provider: "openai", modelId: "gpt-4o" },
         { label: "Gemini 2.5 Pro", provider: "google", modelId: "gemini-2.5-pro" },
-        { label: "DeepSeek V3", provider: "deepseek", modelId: "deepseek-chat" },
+        { label: "DeepSeek V4 Pro", provider: "deepseek", modelId: "deepseek-v4-pro" },
       ];
     }
 

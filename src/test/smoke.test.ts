@@ -69,7 +69,7 @@ function testBoundedJson(): void {
     const text = JSON.stringify(value) ?? "null";
     const lineCount = text.split("\n").length;
     const byteCount = Buffer.byteLength(text, "utf8");
-    if (lineCount <= 2000 && byteCount <= 50 * 1024) return text;
+    if (lineCount <= 2000 && byteCount <= 50 * 1024) { return text; }
     return JSON.stringify({
       truncated: true,
       message: "Result exceeded output limits.",
@@ -115,4 +115,4 @@ for (const test of tests) {
 
 console.log(`\n${passed} passed, ${failed} failed\n`);
 
-if (failed > 0) process.exit(1);
+if (failed > 0) { process.exit(1); }

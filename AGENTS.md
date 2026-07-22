@@ -13,6 +13,7 @@
 - 环境：Windows 11, Git Bash, PowerShell 5.1
 - Node: 24.16.0
 - pi SDK: 0.81.1（最新）
+- DeepSeek 模型已更至 V4（v4-pro / v4-flash）
 
 ## 开发原则
 
