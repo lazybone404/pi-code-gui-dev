@@ -9,7 +9,6 @@ import * as vscode from "vscode";
 export interface AuthServiceHost {
   modelRuntime: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   modelRegistry: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-  ai: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   get model(): { id?: string; provider?: string } | null;
   setModel(provider: string, modelId: string): Promise<void>;
 }
@@ -286,12 +285,12 @@ export class AuthService {
     authType: string,
     previousModel: { id?: string; provider?: string } | null,
   ): Promise<void> {
-    const { modelRegistry, ai } = this.host;
+    const { modelRegistry } = this.host;
     const actionLabel = authType === "oauth"
       ? `Logged in to ${providerName}`
       : `Saved API key for ${providerName}`;
-
-    if (ai && (!previousModel || previousModel.provider === "unknown")) {
+    const hasModelRegistry = modelRegistry && modelRegistry.getAvailable;
+    if (hasModelRegistry && (!previousModel || previousModel.provider === "unknown")) {
       const availableModels = modelRegistry.getAvailable();
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const providerModels = availableModels.filter((m: any) => m.provider === providerId);

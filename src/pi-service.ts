@@ -10,7 +10,6 @@ import { buildSystemPrompt, buildContextFiles, buildPromptTemplates } from "./se
 
 import {
   type PiSdk,
-  type PiAi,
   type InstallStatus,
   reverseFind,
   importWithRetry,
@@ -42,7 +41,6 @@ export class PiService {
   // SDK instances (loaded at init time)
   /* eslint-disable @typescript-eslint/no-explicit-any -- SDK objects are dynamically typed */
   private SDK: PiSdk | null = null;
-  private AI: PiAi | null = null;
   private modelRuntime: any = null;
   private modelRegistry: any = null;
   private authService: AuthService | null = null;
@@ -214,28 +212,6 @@ export class PiService {
       return { success: false, error: `Failed to load pi-coding-agent: ${e.message ?? e}` };
     }
 
-    try {
-      this.AI = (await importWithRetry(
-        path.join(this._piRoot, "node_modules/@earendil-works/pi-ai/dist/index.js"), 5, 500
-      )) as PiAi;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (e: any) {
-      const msg = e.message ?? String(e);
-      // Detect common missing-dependency patterns caused by broken npm global
-      // installs and give a specific fix instruction.
-      const openaiMatch = msg.match(/openai\/index\.js/);
-      const anthroMatch = msg.match(/@anthropic-ai\/sdk/);
-      if (openaiMatch || anthroMatch) {
-        return {
-          success: false,
-          error:
-            `Missing dependency (${openaiMatch ? "openai" : "@anthropic-ai/sdk"}). ` +
-            `This is usually caused by a broken npm global install. ` +
-            `Fix: npm uninstall -g @earendil-works/pi-coding-agent && npm install -g @earendil-works/pi-coding-agent`,
-        };
-      }
-      return { success: false, error: `Failed to load pi-ai: ${msg}` };
-    }
     // Load typebox for defineTool usage (with retry — npm install may still
     // be populating node_modules when the extension host first activates).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -275,14 +251,13 @@ export class PiService {
       this.authService = new AuthService({
         modelRuntime: this.modelRuntime,
         modelRegistry: this.modelRegistry,
-        ai: this.AI,
         get model() { return this._model; },
         setModel: (provider: string, modelId: string) => this.setModel(provider, modelId),
       });
       // ModelService needs PiService's internal state — capture via closure
       const pi = this;
       this.modelService = new ModelService({
-        ai: this.AI,
+        modelRuntime: this.modelRuntime,
         modelRegistry: this.modelRegistry,
         get session() { return pi.session; },
         get model() { return pi._model; },
@@ -301,7 +276,6 @@ export class PiService {
     }
 
     // ── Step 4: Pick a model (dynamic from registry) ──
-    const AI = this.AI;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let model: any = null;
     try {
@@ -332,7 +306,7 @@ export class PiService {
             ["anthropic", "claude-haiku-4-5"],
             ["openai", "gpt-4o"],
           ]) {
-            const m = AI.getModel(candidate[0], candidate[1]);
+            const m = this.modelRuntime.getModel(candidate[0], candidate[1]);
             if (m) { model = m; break; }
           }
         }
@@ -354,7 +328,7 @@ export class PiService {
     const defProvider = cfg.get<string>("defaultModelProvider");
     const defModelId = cfg.get<string>("defaultModelId");
     if (defProvider && defModelId) {
-      const defModel = this.modelRegistry.find(defProvider, defModelId) ?? AI.getModel(defProvider, defModelId);
+      const defModel = this.modelRegistry.find(defProvider, defModelId) ?? this.modelRuntime.getModel(defProvider, defModelId);
       if (defModel) { model = defModel; }
     }
 
@@ -462,7 +436,7 @@ export class PiService {
               piLog(`Restored model from session: ${e.provider}/${e.modelId}`);
             } else {
               // Fallback: try getModel
-              const m = AI.getModel(e.provider, e.modelId);
+              const m = this.modelRuntime.getModel(e.provider, e.modelId);
               if (m) {
                 resumeModel = m;
                 foundSessionModel = true;
@@ -506,7 +480,7 @@ export class PiService {
       if (this.cycleModels.length > 0) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
         opts.scopedModels = this.cycleModels.map((m: any) => ({
-          model: AI.getModel(m.provider, m.id),
+          model: this.modelRuntime.getModel(m.provider, m.id),
           thinkingLevel: "off",
         }));
       }
@@ -1304,9 +1278,9 @@ export class PiService {
 
   /** Find a vision-capable model from the available scoped models. */
   private findVisionModel(): { provider: string; id: string } | null {
-    if (!this.AI) { return null; }
+    if (!this.modelRuntime) { return null; }
     for (const cm of this.cycleModels) {
-      const m = this.AI.getModel(cm.provider, cm.id);
+      const m = this.modelRuntime.getModel(cm.provider, cm.id);
       if (m?.input?.includes("image")) {
         return { provider: cm.provider, id: cm.id };
       }
@@ -1650,10 +1624,10 @@ export class PiService {
 
   /** Generate a short 3-word tab title summary for the first user input in a session. */
   async generateTabSummary(userInput: string): Promise<string | null> {
-    if (!this.AI || !this._model) { return null; }
+    if (!this.modelRuntime || !this._model) { return null; }
 
     try {
-      const model = this.AI.getModel(this._model.provider, this._model.id);
+      const model = this.modelRuntime.getModel(this._model.provider, this._model.id);
       if (!model) { return null; }
 
       const authData = this.modelRuntime
@@ -1668,7 +1642,7 @@ export class PiService {
         ],
       };
 
-      const result = await this.AI.complete(model, context, {
+      const result = await this.modelRuntime.complete(model, context, {
         maxTokens: 20,
         apiKey,
       });
@@ -1946,7 +1920,7 @@ export class PiService {
     this.session = null;
     this.unsubscribe = null;
     this.SDK = null;
-    this.AI = null;
+    this.modelRuntime = null;
     this.resourceLoader = null;
   }
 }

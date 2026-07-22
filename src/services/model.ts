@@ -9,7 +9,7 @@ import { piWarn } from "../logger.js";
 
 /** Dependencies ModelService needs from its host */
 export interface ModelServiceHost {
-  ai: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  modelRuntime: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   modelRegistry: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   session: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   get model(): { id?: string; provider?: string } | null;
@@ -31,7 +31,7 @@ export class ModelService {
 
   /** Cycle to the next model in the scoped list. */
   async cycleModel(): Promise<void> {
-    if (!this.host.session || !this.host.ai) {
+    if (!this.host.session || !this.host.modelRuntime) {
       vscode.window.showWarningMessage("Pi session not ready yet.");
       return;
     }
@@ -41,7 +41,7 @@ export class ModelService {
     }
     this.host.cycleIndex = (this.host.cycleIndex + 1) % this.host.cycleModels.length;
     const next = this.host.cycleModels[this.host.cycleIndex];
-    const model = this.host.ai.getModel(next.provider, next.id);
+    const model = this.host.modelRuntime.getModel(next.provider, next.id);
     if (model) {
       const prevId = this.host.model?.id ?? "?";
       await this.host.session.setModel(model);
@@ -57,7 +57,7 @@ export class ModelService {
 
   /** Switch to a specific model by provider and model ID. */
   async setModel(provider: string, modelId: string): Promise<void> {
-    const model = this.host.ai.getModel(provider, modelId);
+    const model = this.host.modelRuntime.getModel(provider, modelId);
     if (!model) {
       vscode.window.showErrorMessage(`Model not found: ${provider}/${modelId}`);
       return;

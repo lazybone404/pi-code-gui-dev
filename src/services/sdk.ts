@@ -24,12 +24,6 @@ export interface PiSdk {
   createSyntheticSourceInfo: Function;
 }
 
-export interface PiAi {
-  getModel: Function;
-  getProviders: Function;
-  complete: Function;
-}
-
 export interface InstallStatus {
   installed: boolean;
   hasApiKey: boolean;
