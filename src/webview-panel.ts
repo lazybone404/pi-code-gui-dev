@@ -435,7 +435,7 @@ export class PiWebviewPanel {
   <div id="attachment-bar"></div>
 
   <div id="input-area">
-    <textarea id="prompt-input" placeholder="Ask pi to do something..." rows="1" disabled></textarea>
+    <textarea id="prompt-input" placeholder="Ask Pi to help you code..." rows="1" disabled></textarea>
     <div id="steer-split">
       <button id="send-button" disabled title="Submit (Enter)">↵</button>
       <button id="steer-dropdown" class="hidden" title="Switch to Queue">▾</button>

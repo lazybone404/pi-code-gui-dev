@@ -1,5 +1,5 @@
 import { state } from "../state.js";
-import { setLocale } from "../locale.js";
+import { setLocale, t } from "../locale.js";
 import { logEvent, logDom, summary as debugSummary, debugEventLog } from "../debug.js";
 import {
   renderMarkdown, renderBlock, renderInline, patchBlockList,
@@ -643,10 +643,10 @@ export function handleStatusUpdate(data: any) {
       sbModel.textContent = sbModelText(data.model);
     }
     if (sbThinking) {
-      sbThinking.textContent = "thinking: " + (data.thinkingLevel || "off");
+      sbThinking.textContent = t("footer.thinking") + ": " + (data.thinkingLevel || "off");
     }
     if (sbEffort) {
-      sbEffort.textContent = "effort: " + (data.effort || "auto");
+      sbEffort.textContent = t("footer.effort") + ": " + (data.effort || "auto");
     }
     if (sbUsage && data.usage) {
       var parts = [];
@@ -670,10 +670,10 @@ export function handleStatus(data: any) {
         sbModel.textContent = sbModelText(data.model);
       }
       if (sbThinking) {
-        sbThinking.textContent = "thinking: " + (data.thinkingLevel || "off");
+        sbThinking.textContent = t("footer.thinking") + ": " + (data.thinkingLevel || "off");
       }
       if (sbEffort) {
-        sbEffort.textContent = "effort: " + (data.effort || "auto");
+        sbEffort.textContent = t("footer.effort") + ": " + (data.effort || "auto");
       }
       setSbDot("idle");
     } else if (data.model === "not installed" || data.model === "init failed") {
@@ -820,7 +820,7 @@ export function handleAutoRetryEnd(data: any) {
 
 export function handleThinkingLevelChanged(data: any) {
     if (sbThinking && data.level) {
-      sbThinking.textContent = "thinking: " + data.level;
+      sbThinking.textContent = t("footer.thinking") + ": " + data.level;
     }
   }
 
@@ -2271,4 +2271,7 @@ export function handleSetLocale(data: Record<string, unknown>): void {
   if (data && typeof data.locale === "string") {
     setLocale(data.locale);
   }
+  // Update static UI elements with new locale
+  var promptInput = document.getElementById("prompt-input") as HTMLTextAreaElement;
+  if (promptInput) { promptInput.placeholder = t("input.placeholder"); }
 }
