@@ -59,3 +59,15 @@ document.addEventListener("visibilitychange", () => {
     }
   }
 });
+
+// ── Welcome button ──────────────────────────────────
+document.addEventListener("DOMContentLoaded", function () {
+  var loginBtn = document.getElementById("welcome-login-btn");
+  if (loginBtn) {
+    loginBtn.addEventListener("click", function () {
+      if (window.__vscode) {
+        window.__vscode.postMessage({ type: "loginTrigger" });
+      }
+    });
+  }
+});

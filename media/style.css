@@ -228,12 +228,6 @@
   .welcome-hints {
     text-align: left;
     display: inline-block;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px 20px;
-    font-size: 0.85em;
-    line-height: 1.8;
 
     code {
       background: var(--bg-tertiary);
@@ -241,6 +235,30 @@
       border-radius: 3px;
       font-size: 0.9em;
     }
+  }
+
+  .welcome-btn {
+    display: block;
+    width: 100%;
+    padding: 10px 20px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.95em;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 10px;
+    transition: opacity 0.15s;
+  }
+
+  .welcome-btn:hover {
+    opacity: 0.85;
+  }
+
+  .welcome-or {
+    color: var(--fg-tertiary) !important;
+    margin-top: 8px !important;
   }
 
   /* ═══ Code blocks (rich: header, copy btn, line numbers) ══ */

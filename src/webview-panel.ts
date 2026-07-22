@@ -169,6 +169,10 @@ export class PiWebviewPanel {
             void this.triggerEffortPicker();
             break;
 
+          case "loginTrigger":
+            void vscode.commands.executeCommand("pi-code-gui.login");
+            break;
+
           case "openUrl":
             vscode.env.openExternal(vscode.Uri.parse(message.url));
             break;
@@ -430,8 +434,8 @@ export class PiWebviewPanel {
       <h2>Pi Code Gui</h2>
       <p class="welcome-subtitle">AI coding assistant in VS Code</p>
       <div class="welcome-hints">
-        <p>Ctrl+Shift+P → <strong>PiGui: Set Up API Key / Login</strong></p>
-        <p>Or set <code>DEEPSEEK_API_KEY</code> in environment variables</p>
+        <button id="welcome-login-btn" class="welcome-btn">Set Up API Key / Login</button>
+        <p class="welcome-or">or set <code>DEEPSEEK_API_KEY</code> in environment variables</p>
       </div>
     </div>
   </div>
