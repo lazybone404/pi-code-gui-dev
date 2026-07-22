@@ -973,6 +973,8 @@ export class PiService {
         break;
 
       case "agent_end":
+      case "agent_settled":
+        // agent_settled: new in SDK 0.81.1 — fires after retries & follow-ups complete
         this._isStreaming = false;
         this.currentAssistantToolCalls.clear();
         this.turnIndex = 0;
