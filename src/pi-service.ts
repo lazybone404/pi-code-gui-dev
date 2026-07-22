@@ -208,9 +208,15 @@ export class PiService {
     }
   }
 
-  /** Quick check: is SDK installed and are credentials present? */
+  /** Quick check: is pi installed and are credentials present?
+   *  Tries SDK credentials first, then environment variable as fallback. */
   static async checkStatus(): Promise<{ installed: boolean; hasApiKey: boolean; error?: string }> {
     try {
+      // Check env var first (fast path — no SDK import needed)
+      if (process.env.DEEPSEEK_API_KEY) {
+        return { installed: true, hasApiKey: true };
+      }
+
       const piRoot = resolvePiPackagePath();
       if (!piRoot) { return { installed: false, hasApiKey: false, error: "pi not installed" }; }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
