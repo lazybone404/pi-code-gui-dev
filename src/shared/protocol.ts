@@ -358,6 +358,22 @@ const ExtensionToWebviewSchema = z.discriminatedUnion("type", [
     }),
   }),
 
+  // Auth status (extension → webview, on startup)
+  z.object({
+    type: z.literal("authStatus"),
+    data: z.object({
+      loggedIn: z.boolean(),
+    }),
+  }),
+
+  // Session name update (extension → webview)
+  z.object({
+    type: z.literal("sessionName"),
+    data: z.object({
+      name: z.string(),
+    }),
+  }),
+
   // Interactive dialog (extension → webview)
   z.object({
     type: z.literal("show_dialog"),

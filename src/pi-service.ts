@@ -208,6 +208,22 @@ export class PiService {
     }
   }
 
+  /** Quick check: is SDK installed and are credentials present? */
+  static async checkStatus(): Promise<{ installed: boolean; hasApiKey: boolean; error?: string }> {
+    try {
+      const piRoot = resolvePiPackagePath();
+      if (!piRoot) { return { installed: false, hasApiKey: false, error: "pi not installed" }; }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const SDK: any = await importWithRetry(path.join(piRoot, "dist/index.js"), 3, 300);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const creds: any[] = await SDK.ModelRuntime.listCredentials();
+      return { installed: true, hasApiKey: creds.length > 0 };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (e: any) {
+      return { installed: false, hasApiKey: false, error: e.message ?? String(e) };
+    }
+  }
+
   /** Delete a session file from disk. */
   static async deleteSessionFile(filePath: string): Promise<void> {
     if (typeof filePath !== "string") {
@@ -1857,6 +1873,7 @@ export class PiService {
     if (!name) { return; }
     this.setSessionName(name);
     this._sessionNamed = true;
+    this.emit({ type: "sessionName", data: { name } });
   }
 
   private _restoreActiveToolsFromSession(): void {

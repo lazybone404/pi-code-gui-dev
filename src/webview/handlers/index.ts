@@ -188,6 +188,8 @@ export function createLiveCard(key: string, customType: string, label: string, c
       case "registerMessageRenderer": handleRegisterMessageRenderer(msg.data); break;
       case "show_dialog":          handleShowDialog(msg.data); break;
       case "setLocale":            handleSetLocale(msg.data); break;
+      case "authStatus":          handleAuthStatus(msg.data); break;
+      case "sessionName":         handleSessionName(msg.data); break;
 
       default:
         // Surface unknown message types as visible notifications.
@@ -2283,4 +2285,17 @@ export function handleSetLocale(data: Record<string, unknown>): void {
   // Update static UI elements with new locale
   var promptInput = document.getElementById("prompt-input") as HTMLTextAreaElement;
   if (promptInput) { promptInput.placeholder = t("input.placeholder"); }
+}
+
+export function handleAuthStatus(data: Record<string, unknown>): void {
+  if (data && data.loggedIn === true) {
+    hideWelcome();
+  }
+}
+
+export function handleSessionName(data: Record<string, unknown>): void {
+  if (data && typeof data.name === "string") {
+    var title = document.getElementById("topbar-title");
+    if (title) { title.textContent = data.name; }
+  }
 }

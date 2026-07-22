@@ -71,3 +71,15 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 });
+
+// ── Topbar history button ─────────────────────────
+document.addEventListener("DOMContentLoaded", function () {
+  var historyBtn = document.getElementById("topbar-history-btn");
+  if (historyBtn) {
+    historyBtn.addEventListener("click", function () {
+      if (window.__vscode) {
+        window.__vscode.postMessage({ type: "searchSessions" });
+      }
+    });
+  }
+});

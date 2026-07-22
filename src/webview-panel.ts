@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import type { PiService } from "./pi-service.js";
+import { PiService } from "./pi-service.js";
 import type { PiServiceEvent } from "./types.js";
 import { validateExtensionToWebview, type WebviewToExtension, type ExtensionToWebview } from "./shared/protocol.js";
 
@@ -71,6 +71,9 @@ export class PiWebviewPanel {
       type: "setLocale",
       data: { locale: vscode.env.language },
     });
+
+    // Check auth status: if CLI already configured, skip welcome page
+    void this._sendAuthStatus();
 
     this.panel.onDidChangeViewState((e) => {
       if (e.webviewPanel.active && this._onActivateCb) {
@@ -171,6 +174,10 @@ export class PiWebviewPanel {
 
           case "loginTrigger":
             void vscode.commands.executeCommand("pi-code-gui.login");
+            break;
+
+          case "searchSessions":
+            void vscode.commands.executeCommand("pi-code-gui.filterPastSessions");
             break;
 
           case "openUrl":
@@ -305,6 +312,19 @@ export class PiWebviewPanel {
     });
   }
 
+  /** Check if the user is already authenticated (e.g., via CLI setup) and
+   *  tell the webview to skip the welcome page if so. */
+  private async _sendAuthStatus(): Promise<void> {
+    try {
+      const status = await PiService.checkStatus();
+      const loggedIn = status.hasApiKey;
+      this.postMessage({ type: "authStatus", data: { loggedIn } });
+    } catch {
+      // If check fails, default to showing welcome — user can still log in manually
+      this.postMessage({ type: "authStatus", data: { loggedIn: false } });
+    }
+  }
+
   /** Update the tab title to indicate streaming / idle / init state.
    *  The in-webview status bar handles the visual color indicator;
    *  the tab uses a text suffix for streaming so it stays theme-consistent. */
@@ -436,6 +456,15 @@ export class PiWebviewPanel {
       <div class="welcome-hints">
         <button id="welcome-login-btn" class="welcome-btn">Set Up API Key / Login</button>
         <p class="welcome-or">or set <code>DEEPSEEK_API_KEY</code> in environment variables</p>
+      </div>
+    </div>
+    <!-- Top navigation bar: session name + history button -->
+    <div id="topbar" class="topbar">
+      <span id="topbar-title" class="topbar-title">Pi Code Gui</span>
+      <div class="topbar-actions">
+        <button id="topbar-history-btn" class="topbar-btn" title="Search & switch sessions">
+          📋
+        </button>
       </div>
     </div>
   </div>

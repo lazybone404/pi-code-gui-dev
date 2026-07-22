@@ -261,6 +261,54 @@
     margin-top: 8px !important;
   }
 
+  /* ═══ Top navigation bar ═══════════════════════════════════ */
+
+  .topbar {
+    display: none;           /* hidden until welcome dismissed */
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-secondary);
+    flex-shrink: 0;
+  }
+
+  .topbar.visible { display: flex; }
+
+  .topbar-title {
+    font-size: 0.85em;
+    font-weight: 600;
+    color: var(--fg-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 70%;
+  }
+
+  .topbar-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .topbar-btn {
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    color: var(--fg-secondary);
+    cursor: pointer;
+    padding: 2px 6px;
+    font-size: 0.9em;
+    line-height: 1;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .topbar-btn:hover {
+    background: var(--bg-tertiary);
+    color: var(--fg-primary);
+    border-color: var(--border);
+  }
+
   /* ═══ Code blocks (rich: header, copy btn, line numbers) ══ */
 
   .code-block-wrapper {
