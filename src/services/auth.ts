@@ -13,6 +13,13 @@ export interface AuthServiceHost {
   setModel(provider: string, modelId: string): Promise<void>;
 }
 
+// Helper: vscode.l10n.t with {0},{1} parameter support
+const lt = (key: string, ...args: string[]): string => {
+  let msg = vscode.l10n.t(key);
+  for (let i = 0; i < args.length; i++) { msg = msg.replace(`{${i}}`, args[i]); }
+  return msg;
+};
+
 export class AuthService {
   constructor(private host: AuthServiceHost) {}
 
@@ -81,7 +88,7 @@ export class AuthService {
 
     if (options.length === 0) {
       await vscode.window.showInformationMessage(
-        "No stored credentials to remove.",
+        lt("msg.noStoredCredentials"),
       );
       return;
     }
@@ -102,7 +109,7 @@ export class AuthService {
       await vscode.window.showInformationMessage(message);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      await vscode.window.showErrorMessage(`Logout failed: ${error.message ?? error}`);
+      await vscode.window.showErrorMessage(lt("msg.logoutFailed", error.message ?? error));
     }
   }
 
@@ -130,8 +137,8 @@ export class AuthService {
     const options = this.buildProviderOptions(authType);
     if (options.length === 0) {
       const label = authType === "oauth"
-        ? "No subscription providers available."
-        : "No API key providers available.";
+        ? lt("msg.noOAuthProviders")
+        : lt("msg.noApiKeyProviders");
       await vscode.window.showInformationMessage(label);
       return undefined;
     }
@@ -248,7 +255,7 @@ export class AuthService {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       if (error.message !== "Login cancelled") {
-        await vscode.window.showErrorMessage(`Failed to login to ${providerName}: ${error.message ?? error}`);
+        await vscode.window.showErrorMessage(lt("msg.loginFailed", providerName, error.message ?? error));
       }
     }
   }
@@ -274,7 +281,7 @@ export class AuthService {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       if (error.message !== "Login cancelled") {
-        await vscode.window.showErrorMessage(`Failed to save API key for ${providerName}: ${error.message ?? error}`);
+        await vscode.window.showErrorMessage(lt("msg.saveKeyFailed", providerName, error.message ?? error));
       }
     }
   }
@@ -286,9 +293,6 @@ export class AuthService {
     previousModel: { id?: string; provider?: string } | null,
   ): Promise<void> {
     const { modelRegistry } = this.host;
-    const actionLabel = authType === "oauth"
-      ? `Logged in to ${providerName}`
-      : `Saved API key for ${providerName}`;
     const hasModelRegistry = modelRegistry && modelRegistry.getAvailable;
     if (hasModelRegistry && (!previousModel || previousModel.provider === "unknown")) {
       const availableModels = modelRegistry.getAvailable();
@@ -297,14 +301,14 @@ export class AuthService {
       if (providerModels.length > 0) {
         try {
           await this.host.setModel(providerId, providerModels[0].id);
-          await vscode.window.showInformationMessage(`${actionLabel}. Selected ${providerModels[0].id}.`);
+          await vscode.window.showInformationMessage(lt("msg.loggedIn", providerName, providerModels[0].id));
         } catch {
-          await vscode.window.showInformationMessage(`${actionLabel}.`);
+          await vscode.window.showInformationMessage(lt("msg.loggedInNoModel", providerName));
         }
         return;
       }
     }
 
-    await vscode.window.showInformationMessage(`${actionLabel}.`);
+    await vscode.window.showInformationMessage(lt("msg.loggedInNoModel", providerName));
   }
 }

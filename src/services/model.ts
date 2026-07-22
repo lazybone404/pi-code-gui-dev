@@ -7,6 +7,8 @@
 import * as vscode from "vscode";
 import { piWarn } from "../logger.js";
 
+const lt = vscode.l10n.t;
+
 /** Dependencies ModelService needs from its host */
 export interface ModelServiceHost {
   modelRuntime: any; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -32,11 +34,11 @@ export class ModelService {
   /** Cycle to the next model in the scoped list. */
   async cycleModel(): Promise<void> {
     if (!this.host.session || !this.host.modelRuntime) {
-      vscode.window.showWarningMessage("Pi session not ready yet.");
+      vscode.window.showWarningMessage(lt("msg.sessionNotReady"));
       return;
     }
     if (this.host.cycleModels.length === 0) {
-      vscode.window.showWarningMessage("No models available. Configure an API key first.");
+      vscode.window.showWarningMessage(lt("msg.noModelsAvailable"));
       return;
     }
     this.host.cycleIndex = (this.host.cycleIndex + 1) % this.host.cycleModels.length;
@@ -47,9 +49,9 @@ export class ModelService {
       await this.host.session.setModel(model);
       this.host.model = { id: next.id, provider: next.provider };
       if (this.host.cycleModels.length <= 1) {
-        vscode.window.showInformationMessage(`Only ${next.id} configured.`);
+        vscode.window.showInformationMessage(lt("msg.onlyOneModel", next.id));
       } else {
-        vscode.window.showInformationMessage(`Model: ${prevId} → ${next.id}`);
+        vscode.window.showInformationMessage(lt("msg.modelSwitched", prevId, next.id));
       }
       this.host.reportStatus();
     }
@@ -59,7 +61,7 @@ export class ModelService {
   async setModel(provider: string, modelId: string): Promise<void> {
     const model = this.host.modelRuntime.getModel(provider, modelId);
     if (!model) {
-      vscode.window.showErrorMessage(`Model not found: ${provider}/${modelId}`);
+      vscode.window.showErrorMessage(lt("msg.modelNotFound", `${provider}/${modelId}`));
       return;
     }
     if (this.host.session && typeof this.host.session.setModel === "function") {
@@ -77,7 +79,7 @@ export class ModelService {
       provider: model.provider,
       modelId: model.id,
     });
-    vscode.window.showInformationMessage(`Model: ${prevId} → ${model.id}`);
+    vscode.window.showInformationMessage(lt("msg.modelSwitched", prevId, model.id));
   }
 
   /** Set thinking level on current session. */

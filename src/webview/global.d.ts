@@ -144,3 +144,11 @@ interface HTMLElement {
   _cachedContent?: string;
   _baselineText?: string;
 }
+
+// vscode.l10n type declarations (available in VS Code 1.118+)
+declare module "vscode" {
+  namespace l10n {
+    function t(key: string): string;
+    function t(key: string, ...args: string[]): string;
+  }
+}
