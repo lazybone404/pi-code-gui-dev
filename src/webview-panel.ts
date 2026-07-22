@@ -72,9 +72,6 @@ export class PiWebviewPanel {
       data: { locale: vscode.env.language },
     });
 
-    // Check auth status: if CLI already configured, skip welcome page
-    void this._sendAuthStatus();
-
     this.panel.onDidChangeViewState((e) => {
       if (e.webviewPanel.active && this._onActivateCb) {
         this._onActivateCb();
@@ -174,7 +171,10 @@ export class PiWebviewPanel {
 
           case "loginTrigger":
             await vscode.commands.executeCommand("pi-code-gui.login");
-            // Re-check auth after login — dismiss welcome if now authenticated
+            await this._sendAuthStatus();
+            break;
+
+          case "webviewReady":
             await this._sendAuthStatus();
             break;
 

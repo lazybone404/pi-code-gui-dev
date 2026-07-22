@@ -83,3 +83,10 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 });
+
+// ── Signal ready to extension host ─────────────────
+document.addEventListener("DOMContentLoaded", function () {
+  if (window.__vscode) {
+    window.__vscode.postMessage({ type: "webviewReady" });
+  }
+});
